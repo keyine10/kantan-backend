@@ -1,4 +1,5 @@
 import { List } from 'src/kanban/lists/entities/list.entity';
+import { User } from 'src/users/entities/user.entity';
 import {
 	Entity,
 	PrimaryGeneratedColumn,
@@ -17,6 +18,9 @@ export class Task {
 
 	@ManyToOne(() => List, (list) => list.tasks)
 	list: List;
+
+	@ManyToOne(() => User, (user) => user.tasks)
+	user: User;
 
 	// TODO: checklists and labels
 	// @OneToMany(() => Checklist, (checklist) => checklist.task)

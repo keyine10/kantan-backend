@@ -4,6 +4,8 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
+
+	// validation pipe for dtos
 	app.useGlobalPipes(
 		new ValidationPipe({
 			transform: true,
