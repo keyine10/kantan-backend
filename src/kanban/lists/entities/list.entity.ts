@@ -10,8 +10,8 @@ import {
 
 @Entity('lists')
 export class List {
-	@PrimaryGeneratedColumn()
-	id: number;
+	@PrimaryGeneratedColumn('uuid')
+	id: string;
 
 	@Column()
 	title: string;

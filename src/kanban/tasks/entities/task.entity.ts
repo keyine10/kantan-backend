@@ -10,11 +10,14 @@ import {
 
 @Entity('tasks')
 export class Task {
-	@PrimaryGeneratedColumn()
-	id: number;
+	@PrimaryGeneratedColumn('uuid')
+	id: string;
 
 	@Column()
 	title: string;
+
+	@Column()
+	position: number;
 
 	@ManyToOne(() => List, (list) => list.tasks)
 	list: List;

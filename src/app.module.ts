@@ -18,6 +18,7 @@ import { KanbanModule } from './kanban/kanban.module';
 				database: process.env.DATABASE_NAME,
 				synchronize: true,
 				autoLoadEntities: true,
+				uuidExtension: 'pgcrypto',
 			}),
 		}),
 		UsersModule,
