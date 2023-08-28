@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Board } from 'src/kanban/boards/entities/board.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class User {
@@ -10,4 +11,7 @@ export class User {
 	email: string;
 	@Column()
 	password: string;
+
+	@OneToMany((type) => Board, (board) => board.user)
+	boards: Board[];
 }

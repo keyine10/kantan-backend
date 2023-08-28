@@ -11,7 +11,7 @@ export class UsersService {
 		private readonly userRepository: Repository<User>,
 	) {}
 	findAll() {
-		return this.userRepository.find();
+		// return this.userRepository.find();
 		return `This action returns all users`;
 	}
 
