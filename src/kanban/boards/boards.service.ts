@@ -7,7 +7,7 @@ import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from './entities/board.entity';
-import { Repository } from 'typeorm';
+import { ArrayContains, Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 
@@ -23,23 +23,27 @@ export class BoardsService {
 		const userInDb = await this.userRepository.findOneBy({ id: user.id });
 		const createBoard = await this.boardRepository.create({
 			...createBoardDto,
-			creatorId: user.id,
-			membersId: [user.id],
+			creatorId: userInDb.id,
+			members: [userInDb],
 		});
-		const savedBoard = this.boardRepository.save(createBoard);
+		const savedBoard = await this.boardRepository.save(createBoard);
 		return savedBoard;
 	}
 
 	findAll(user: ActiveUserData) {
 		return this.boardRepository.find({
-			where: { creator: { id: user.id } },
+			where: [
+				{ creator: [{ id: user.id }] },
+				{ members: [{ id: user.id }] },
+			],
 		});
 	}
 
+	//TODO: add member check
 	async findOne(id: string, user: ActiveUserData) {
 		let board = await this.boardRepository.findOne({
-			where: { id, creatorId: user.id },
-			relations: ['lists', 'tasks'],
+			where: [{ id, creatorId: user.id }],
+			relations: ['lists', 'tasks', 'members', 'creator'],
 		});
 		if (!board) throw new NotFoundException();
 		return board;
@@ -53,7 +57,10 @@ export class BoardsService {
 		let board = await this.boardRepository.findOneBy({ id });
 		if (!board)
 			throw new NotFoundException(`Cannot find Board with id ${id}`);
-		if (board.creatorId !== user.id && !board.membersId.includes(user.id)) {
+		if (
+			board.creatorId !== user.id
+			// && !board.membersId.includes(user.id)
+		) {
 			console.log(board.creatorId, user.id);
 			throw new UnauthorizedException();
 		}

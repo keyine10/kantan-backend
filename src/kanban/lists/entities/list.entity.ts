@@ -14,7 +14,7 @@ export class List {
 	id: string;
 
 	@Column()
-	title: string;
+	name: string;
 
 	@Column()
 	position: number;

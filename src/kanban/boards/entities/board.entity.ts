@@ -10,6 +10,8 @@ import {
 	JoinTable,
 	ManyToMany,
 	JoinColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -20,6 +22,15 @@ export class Board {
 	@Column()
 	title: string;
 
+	@Column({ nullable: true })
+	description: string;
+
+	@CreateDateColumn()
+	createdAt: Date;
+
+	@UpdateDateColumn()
+	updatedAt: Date;
+
 	@ManyToOne(() => User, (user) => user.boards)
 	@JoinColumn({ name: 'creatorId', referencedColumnName: 'id' })
 	creator: User;
@@ -27,16 +38,12 @@ export class Board {
 	@Column()
 	creatorId: number;
 
-	@Column({ nullable: true })
-	description: string;
-
-	@ManyToMany(() => User, (user) => user.boards)
-	@JoinColumn({ name: 'membersId', referencedColumnName: 'id' })
-	@JoinTable() // Required for many-to-many relationships
+	// @JoinColumn({ name: 'membersId', referencedColumnName: 'id' })
+	@ManyToMany(() => User, (user) => user.memberBoards)
 	members: User[];
 
-	@Column('int', { array: true, default: [] })
-	membersId: number[];
+	// @Column('int', { array: true })
+	// membersId: number[];
 
 	@OneToMany(() => List, (list) => list.board)
 	lists: List[];

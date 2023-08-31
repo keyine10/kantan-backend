@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { MaxLength } from 'class-validator';
 import { Board } from 'src/kanban/boards/entities/board.entity';
 import { Task } from 'src/kanban/tasks/entities/task.entity';
@@ -6,6 +7,7 @@ import {
 	Entity,
 	JoinTable,
 	ManyToMany,
+	ManyToOne,
 	OneToMany,
 	PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -22,12 +24,18 @@ export class User {
 	@MaxLength(255)
 	@Column({ nullable: true })
 	bio: string;
-	@Column()
+	@Column({ select: false })
 	password: string;
 
-	@ManyToMany(() => Board, (board) => board.members)
+	//own boards
+	@OneToMany(() => Board, (board) => board.creator)
 	@JoinTable()
 	boards: Board[];
+
+	// Many users can be members of a board
+	@ManyToMany(() => Board, (board) => board.members)
+	@JoinTable()
+	memberBoards: Board[];
 
 	@OneToMany((type) => Task, (task) => task.creator)
 	tasks: Task[];

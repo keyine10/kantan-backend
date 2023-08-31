@@ -7,6 +7,8 @@ import {
 	Column,
 	ManyToOne,
 	OneToMany,
+	CreateDateColumn,
+	UpdateDateColumn,
 } from 'typeorm';
 
 @Entity('tasks')
@@ -22,6 +24,12 @@ export class Task {
 
 	@Column()
 	position: number;
+
+	@CreateDateColumn()
+	createdAt: Date;
+
+	@UpdateDateColumn()
+	updatedAt: Date;
 
 	@ManyToOne(() => List, (list) => list.tasks)
 	list: List;

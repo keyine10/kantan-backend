@@ -35,6 +35,7 @@ export class AuthenticationService {
 	async signIn(signInDto: SignInDto) {
 		const user = await this.userRepository.findOne({
 			where: { email: signInDto.email },
+			select: ['id', 'password', 'name', 'email', 'bio'],
 		});
 		if (!user) throw new ConflictException();
 		if (!this.hashingService.compare(signInDto.password, user.password))
