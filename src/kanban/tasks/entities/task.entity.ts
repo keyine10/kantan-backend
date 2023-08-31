@@ -1,3 +1,4 @@
+import { Board } from 'src/kanban/boards/entities/board.entity';
 import { List } from 'src/kanban/lists/entities/list.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
@@ -17,13 +18,19 @@ export class Task {
 	title: string;
 
 	@Column()
+	description: string;
+
+	@Column()
 	position: number;
 
 	@ManyToOne(() => List, (list) => list.tasks)
 	list: List;
 
+	@ManyToOne(() => Board, (board) => board.tasks)
+	board: Board;
+
 	@ManyToOne(() => User, (user) => user.tasks)
-	user: User;
+	creator: User;
 
 	// TODO: checklists and labels
 	// @OneToMany(() => Checklist, (checklist) => checklist.task)

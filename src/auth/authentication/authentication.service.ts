@@ -42,7 +42,7 @@ export class AuthenticationService {
 
 		const accessToken = this.jwtService.sign(
 			{
-				sub: user.id,
+				id: user.id,
 				email: user.email,
 				name: user.name,
 			},
@@ -57,6 +57,7 @@ export class AuthenticationService {
 			id: user.id,
 			name: user.name,
 			email: user.email,
+			bio: user.bio,
 			accessToken,
 		};
 	}

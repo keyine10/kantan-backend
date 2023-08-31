@@ -16,6 +16,9 @@ export class List {
 	@Column()
 	title: string;
 
+	@Column()
+	position: number;
+
 	@ManyToOne(() => Board, (board) => board.lists)
 	board: Board;
 

@@ -16,7 +16,10 @@ export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
 	@Get(':id')
-	findOne(@Param('id') id: string) {
+	findOne(@Param('id') id: string, @ActiveUser() user) {
+		if (user.id !== +id) {
+			throw new UnauthorizedException();
+		}
 		return this.usersService.findOne(+id);
 	}
 
@@ -27,13 +30,13 @@ export class UsersController {
 		@Body() updateUserDto: UpdateUserDto,
 	) {
 		if (user.id !== +id) {
-			throw UnauthorizedException;
+			throw new UnauthorizedException();
 		}
 		return this.usersService.update(+id, updateUserDto);
 	}
 
-	@Delete(':id')
-	remove(@Param('id') id: string) {
-		return this.usersService.remove(+id);
-	}
+	// @Delete(':id')
+	// remove(@Param('id') id: string) {
+	// 	return this.usersService.remove(+id);
+	// }
 }

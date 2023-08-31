@@ -1,26 +1,80 @@
-import { Injectable } from '@nestjs/common';
+import {
+	Injectable,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Board } from './entities/board.entity';
+import { Repository } from 'typeorm';
+import { User } from 'src/users/entities/user.entity';
+import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 
 @Injectable()
 export class BoardsService {
-  create(createBoardDto: CreateBoardDto) {
-    return 'This action adds a new board';
-  }
+	constructor(
+		@InjectRepository(Board)
+		private readonly boardRepository: Repository<Board>,
+		@InjectRepository(User)
+		private readonly userRepository: Repository<User>,
+	) {}
+	async create(createBoardDto: CreateBoardDto, user: ActiveUserData) {
+		const userInDb = await this.userRepository.findOneBy({ id: user.id });
+		const createBoard = await this.boardRepository.create({
+			...createBoardDto,
+			creatorId: user.id,
+			membersId: [user.id],
+		});
+		const savedBoard = this.boardRepository.save(createBoard);
+		return savedBoard;
+	}
 
-  findAll() {
-    return `This action returns all boards`;
-  }
+	findAll(user: ActiveUserData) {
+		return this.boardRepository.find({
+			where: { creator: { id: user.id } },
+		});
+	}
 
-  findOne(id: number) {
-    return `This action returns a #${id} board`;
-  }
+	async findOne(id: string, user: ActiveUserData) {
+		let board = await this.boardRepository.findOne({
+			where: { id, creatorId: user.id },
+			relations: ['lists', 'tasks'],
+		});
+		if (!board) throw new NotFoundException();
+		return board;
+	}
 
-  update(id: number, updateBoardDto: UpdateBoardDto) {
-    return `This action updates a #${id} board`;
-  }
+	async update(
+		id: string,
+		updateBoardDto: UpdateBoardDto,
+		user: ActiveUserData,
+	) {
+		let board = await this.boardRepository.findOneBy({ id });
+		if (!board)
+			throw new NotFoundException(`Cannot find Board with id ${id}`);
+		if (board.creatorId !== user.id && !board.membersId.includes(user.id)) {
+			console.log(board.creatorId, user.id);
+			throw new UnauthorizedException();
+		}
+		let updatedBoard = await this.boardRepository.preload({
+			id: id,
+			...updateBoardDto,
+		});
 
-  remove(id: number) {
-    return `This action removes a #${id} board`;
-  }
+		return updatedBoard;
+	}
+
+	async remove(id: string, user: ActiveUserData) {
+		let board = await this.boardRepository.findOneBy({
+			id,
+			creatorId: user.id,
+		});
+		if (!board)
+			return new NotFoundException(
+				`Cannot find Board with id ${id} or user is unauthorized`,
+			);
+		await this.boardRepository.remove(board);
+		return;
+	}
 }
