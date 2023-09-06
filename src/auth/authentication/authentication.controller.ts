@@ -4,8 +4,10 @@ import { SignUpDto } from './dto/sign-up.dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto/sign-in.dto';
 import { AuthType } from './enums/auth-type.enum';
 import { Auth } from './decorators/auth.decorator';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @Auth(AuthType.None)
+@ApiTags('Authentication')
 @Controller('authentication')
 export class AuthenticationController {
 	constructor(
