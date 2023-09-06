@@ -1,3 +1,5 @@
+import { Max, Min } from 'class-validator';
+import { POSITION_INTERVAL } from 'src/kanban/boards/common/constants';
 import { Board } from 'src/kanban/boards/entities/board.entity';
 import { List } from 'src/kanban/lists/entities/list.entity';
 import { User } from 'src/users/entities/user.entity';
@@ -22,7 +24,9 @@ export class Task {
 	@Column()
 	description: string;
 
-	@Column()
+	@Column({ type: 'decimal', precision: 10, scale: 3 })
+	@Max(POSITION_INTERVAL * 1000)
+	@Min(1)
 	position: number;
 
 	@CreateDateColumn()
@@ -31,10 +35,10 @@ export class Task {
 	@UpdateDateColumn()
 	updatedAt: Date;
 
-	@ManyToOne(() => List, (list) => list.tasks)
+	@ManyToOne(() => List, (list) => list.tasks, { onDelete: 'CASCADE' })
 	list: List;
 
-	@ManyToOne(() => Board, (board) => board.tasks)
+	@ManyToOne(() => Board, (board) => board.tasks, { onDelete: 'CASCADE' })
 	board: Board;
 
 	@ManyToOne(() => User, (user) => user.tasks)

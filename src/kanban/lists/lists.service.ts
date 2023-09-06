@@ -1,26 +1,122 @@
-import { Injectable } from '@nestjs/common';
+import {
+	Injectable,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { List } from './entities/list.entity';
+import { Repository } from 'typeorm';
+import { Board } from '../boards/entities/board.entity';
+import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 
 @Injectable()
 export class ListsService {
-  create(createListDto: CreateListDto) {
-    return 'This action adds a new list';
-  }
+	constructor(
+		@InjectRepository(Board)
+		private readonly boardRepository: Repository<Board>,
+		@InjectRepository(List)
+		private readonly listRepository: Repository<List>,
+	) {}
 
-  findAll() {
-    return `This action returns all lists`;
-  }
+	async create(createListDto: CreateListDto, user: ActiveUserData) {
+		const boardInDb = await this.boardRepository.findOne({
+			where: { id: createListDto.boardId },
+			relations: ['members'],
+		});
+		if (!boardInDb) throw new NotFoundException('Cannot find board');
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		const newList = this.listRepository.create({
+			...createListDto,
+			board: boardInDb,
+		});
+		return this.listRepository.save(newList);
+	}
 
-  findOne(id: number) {
-    return `This action returns a #${id} list`;
-  }
+	async findAll(boardId: string, user: ActiveUserData) {
+		const boardInDb = await this.boardRepository.findOne({
+			where: { id: boardId },
+			relations: ['members'],
+		});
+		if (!boardInDb) throw new NotFoundException('Cannot find board');
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		let listsInDb = await this.listRepository.find({
+			where: [{ board: { id: boardId } }],
+			relations: ['tasks'],
+		});
+		return listsInDb;
+	}
 
-  update(id: number, updateListDto: UpdateListDto) {
-    return `This action updates a #${id} list`;
-  }
+	async findOne(id: string, user: ActiveUserData) {
+		let listInDb = await this.listRepository.findOne({
+			where: { id },
+			relations: ['tasks', 'board.members'],
+		});
 
-  remove(id: number) {
-    return `This action removes a #${id} list`;
-  }
+		if (!listInDb) {
+			return new NotFoundException('List does not exist');
+		}
+
+		if (!listInDb.board.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		if (!listInDb) throw new NotFoundException('List does not exist');
+		return listInDb;
+	}
+
+	async update(
+		id: string,
+		updateListDto: UpdateListDto,
+		user: ActiveUserData,
+	) {
+		const listInDb = await this.listRepository.findOne({
+			where: { id },
+			relations: ['board.members'],
+		});
+
+		if (!listInDb) {
+			return new NotFoundException('List does not exist');
+		}
+
+		if (!listInDb.board.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		const newList = await this.listRepository.preload({
+			id: id,
+			...updateListDto,
+		});
+		return this.listRepository.save(newList);
+	}
+
+	async remove(id: string, user: ActiveUserData) {
+		const listInDb = await this.listRepository.findOne({
+			where: { id },
+			relations: ['board.members'],
+		});
+
+		if (!listInDb) {
+			return new NotFoundException('List does not exist');
+		}
+
+		if (!listInDb.board.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		await this.listRepository.remove(listInDb);
+		return;
+	}
 }

@@ -1,0 +1,1 @@
+export const POSITION_INTERVAL = 8192;

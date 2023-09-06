@@ -42,13 +42,10 @@ export class Board {
 	@ManyToMany(() => User, (user) => user.memberBoards)
 	members: User[];
 
-	// @Column('int', { array: true })
-	// membersId: number[];
-
-	@OneToMany(() => List, (list) => list.board)
+	@OneToMany(() => List, (list) => list.board, { onDelete: 'CASCADE' })
 	lists: List[];
 
-	@OneToMany(() => Task, (task) => task.board)
+	@OneToMany(() => Task, (task) => task.board, { onDelete: 'CASCADE' })
 	tasks: Task[];
 
 	// Add more properties and methods as needed

@@ -32,20 +32,26 @@ export class BoardsService {
 
 	findAll(user: ActiveUserData) {
 		return this.boardRepository.find({
+			// user is creator or a member
 			where: [
 				{ creator: [{ id: user.id }] },
 				{ members: [{ id: user.id }] },
 			],
+			relations: ['members'],
 		});
 	}
 
 	//TODO: add member check
 	async findOne(id: string, user: ActiveUserData) {
 		let board = await this.boardRepository.findOne({
-			where: [{ id, creatorId: user.id }],
+			// user must be a member
+			where: [{ id, members: [{ id: user.id }] }],
 			relations: ['lists', 'tasks', 'members', 'creator'],
 		});
-		if (!board) throw new NotFoundException();
+		if (!board)
+			throw new NotFoundException(
+				"Board doesn't exist or user is unauthorized",
+			);
 		return board;
 	}
 
@@ -54,33 +60,32 @@ export class BoardsService {
 		updateBoardDto: UpdateBoardDto,
 		user: ActiveUserData,
 	) {
-		let board = await this.boardRepository.findOneBy({ id });
+		let board = await this.boardRepository.findOne({
+			// user must be a member
+			where: [{ id, members: [{ id: user.id }] }],
+		});
+
 		if (!board)
-			throw new NotFoundException(`Cannot find Board with id ${id}`);
-		if (
-			board.creatorId !== user.id
-			// && !board.membersId.includes(user.id)
-		) {
-			console.log(board.creatorId, user.id);
-			throw new UnauthorizedException();
-		}
+			throw new NotFoundException(
+				`Board doesn't exist or user is unauthorized`,
+			);
 		let updatedBoard = await this.boardRepository.preload({
 			id: id,
 			...updateBoardDto,
 		});
 
-		return updatedBoard;
+		return this.boardRepository.save(updatedBoard);
 	}
 
 	async remove(id: string, user: ActiveUserData) {
 		let board = await this.boardRepository.findOneBy({
 			id,
-			creatorId: user.id,
 		});
 		if (!board)
 			return new NotFoundException(
 				`Cannot find Board with id ${id} or user is unauthorized`,
 			);
+		if (board.creatorId !== user.id) return new UnauthorizedException();
 		await this.boardRepository.remove(board);
 		return;
 	}

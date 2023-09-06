@@ -28,7 +28,7 @@ export class BoardsController {
 	) {
 		return this.boardsService.create(createBoardDto, user);
 	}
-
+	//TODO: pagination query
 	@Get()
 	findAll(@ActiveUser() user: ActiveUserData) {
 		return this.boardsService.findAll(user);
