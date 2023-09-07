@@ -2,9 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as morgan from 'morgan';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
+	//logging body of request
+	morgan.token('body', (req) => {
+		return JSON.stringify(req.body);
+	});
+	app.use(morgan(':method :url :status :body'));
+	app.enableCors();
 
 	// validation pipe for dtos
 	app.useGlobalPipes(

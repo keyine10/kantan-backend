@@ -38,8 +38,13 @@ export class AuthenticationService {
 			select: ['id', 'password', 'name', 'email', 'bio'],
 		});
 		if (!user) throw new ConflictException();
-		if (!this.hashingService.compare(signInDto.password, user.password))
-			throw new ConflictException();
+		// TODO: password comparison doesnt work, any password will login
+		let compare = await this.hashingService.compare(
+			signInDto.password,
+			user.password,
+		);
+
+		if (!compare) throw new ConflictException();
 
 		const accessToken = this.jwtService.sign(
 			{
