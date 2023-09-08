@@ -41,7 +41,6 @@ export class BoardsService {
 		});
 	}
 
-	//TODO: add member check
 	async findOne(id: string, user: ActiveUserData) {
 		let board = await this.boardRepository.findOne({
 			// user must be a member
@@ -60,15 +59,7 @@ export class BoardsService {
 		updateBoardDto: UpdateBoardDto,
 		user: ActiveUserData,
 	) {
-		let board = await this.boardRepository.findOne({
-			// user must be a member
-			where: [{ id, members: [{ id: user.id }] }],
-		});
-
-		if (!board)
-			throw new NotFoundException(
-				`Board doesn't exist or user is unauthorized`,
-			);
+		const boardInDb = await this.authorizeBoardMembers(id, user);
 		let updatedBoard = await this.boardRepository.preload({
 			id: id,
 			...updateBoardDto,
@@ -88,5 +79,18 @@ export class BoardsService {
 		if (board.creatorId !== user.id) return new UnauthorizedException();
 		await this.boardRepository.remove(board);
 		return;
+	}
+	async authorizeBoardMembers(boardId: string, user: ActiveUserData) {
+		const boardInDb = await this.boardRepository.findOne({
+			where: { id: boardId },
+			relations: ['members'],
+		});
+		if (!boardInDb) throw new NotFoundException('Cannot find board');
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		return boardInDb;
 	}
 }

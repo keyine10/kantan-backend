@@ -1,5 +1,5 @@
 import { Max, Min } from 'class-validator';
-import { POSITION_INTERVAL } from 'src/kanban/boards/common/constants';
+import { POSITION_INTERVAL } from 'src/kanban/common/constants';
 import { Board } from 'src/kanban/boards/entities/board.entity';
 import { Task } from 'src/kanban/tasks/entities/task.entity';
 import {
@@ -20,7 +20,7 @@ export class List {
 	name: string;
 
 	@Column({ type: 'decimal', scale: 3 })
-	@Max(POSITION_INTERVAL * 1000)
+	@Max(POSITION_INTERVAL * 1000) //maximum of 1000 lists
 	@Min(1)
 	position: number;
 

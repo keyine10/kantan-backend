@@ -8,7 +8,7 @@ import {
 	Min,
 	MinLength,
 } from 'class-validator';
-import { POSITION_INTERVAL } from 'src/kanban/boards/common/constants';
+import { POSITION_INTERVAL } from 'src/kanban/common/constants';
 
 export class CreateListDto {
 	@IsString()

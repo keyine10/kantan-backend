@@ -1,5 +1,5 @@
 import { Max, Min } from 'class-validator';
-import { POSITION_INTERVAL } from 'src/kanban/boards/common/constants';
+import { POSITION_INTERVAL } from 'src/kanban/common/constants';
 import { Board } from 'src/kanban/boards/entities/board.entity';
 import { List } from 'src/kanban/lists/entities/list.entity';
 import { User } from 'src/users/entities/user.entity';
@@ -19,13 +19,13 @@ export class Task {
 	id: string;
 
 	@Column()
-	title: string;
+	name: string;
 
 	@Column()
 	description: string;
 
 	@Column({ type: 'decimal', precision: 10, scale: 3 })
-	@Max(POSITION_INTERVAL * 1000)
+	@Max(POSITION_INTERVAL * 1000) //maximum of 1000 cards
 	@Min(1)
 	position: number;
 
