@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 
 @Injectable()
 export class UsersService {
@@ -26,22 +31,29 @@ export class UsersService {
 		};
 	}
 
-	async update(id: number, updateUserDto: UpdateUserDto) {
-		let user = await this.userRepository.findOneBy({ id });
-		user = {
-			...user,
+	async update(
+		id: number,
+		updateUserDto: UpdateUserDto,
+		user: ActiveUserData,
+	) {
+		let userInDb = await this.userRepository.findOneBy({ id });
+		userInDb = {
+			...userInDb,
 			...updateUserDto,
 		};
 		let updated = await this.userRepository.save(user);
 		return {
-			id: user.id,
-			name: user.name,
-			email: user.email,
-			bio: user.bio,
+			id: userInDb.id,
+			name: userInDb.name,
+			email: userInDb.email,
+			bio: userInDb.bio,
 		};
 	}
 
-	// remove(id: number) {
-	// 	return `This action removes a #${id} user`;
-	// }
+	remove(id: number, user: ActiveUserData) {
+		if (user.id !== id) {
+			throw new UnauthorizedException();
+		}
+		return this.userRepository.delete({ id });
+	}
 }

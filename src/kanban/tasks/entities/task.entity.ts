@@ -1,8 +1,5 @@
 import { Max, Min } from 'class-validator';
-import { POSITION_INTERVAL } from 'src/kanban/common/constants';
-import { Board } from 'src/kanban/boards/entities/board.entity';
-import { List } from 'src/kanban/lists/entities/list.entity';
-import { User } from 'src/users/entities/user.entity';
+
 import {
 	Entity,
 	PrimaryGeneratedColumn,
@@ -12,6 +9,10 @@ import {
 	CreateDateColumn,
 	UpdateDateColumn,
 } from 'typeorm';
+import { User } from '../../../users/entities/user.entity';
+import { POSITION_INTERVAL } from '../../common/constants';
+import { Board } from '../../boards/entities/board.entity';
+import { List } from '../../lists/entities/list.entity';
 
 @Entity('tasks')
 export class Task {

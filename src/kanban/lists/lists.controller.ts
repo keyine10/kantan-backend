@@ -12,8 +12,8 @@ import { ListsService } from './lists.service';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ActiveUser } from 'src/auth/decorators/active-user/active-user.decorator';
 import { ListFindAllParams } from './dto/list-params.dto';
+import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
 
 @ApiTags('Lists')
 @ApiBearerAuth()

@@ -6,11 +6,12 @@ import {
 	Param,
 	Delete,
 	UnauthorizedException,
+	HttpCode,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ActiveUser } from 'src/auth/decorators/active-user/active-user.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ActiveUser } from '../auth/decorators/active-user/active-user.decorator';
 @ApiTags('Users')
 @Controller('users')
 @ApiBearerAuth()
@@ -34,11 +35,11 @@ export class UsersController {
 		if (user.id !== +id) {
 			throw new UnauthorizedException();
 		}
-		return this.usersService.update(+id, updateUserDto);
+		return this.usersService.update(+id, updateUserDto, user);
 	}
-
-	// @Delete(':id')
-	// remove(@Param('id') id: string) {
-	// 	return this.usersService.remove(+id);
-	// }
+	@HttpCode(204)
+	@Delete(':id')
+	remove(@Param('id') id: string, @ActiveUser() user) {
+		return this.usersService.remove(+id, user);
+	}
 }

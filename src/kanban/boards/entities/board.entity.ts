@@ -1,6 +1,6 @@
-import { List } from 'src/kanban/lists/entities/list.entity';
-import { Task } from 'src/kanban/tasks/entities/task.entity';
-import { User } from 'src/users/entities/user.entity';
+import { List } from '../../lists/entities/list.entity';
+import { Task } from '../../tasks/entities/task.entity';
+import { User } from '../../../users/entities/user.entity';
 import {
 	Entity,
 	PrimaryGeneratedColumn,

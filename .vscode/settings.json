@@ -3,5 +3,6 @@
     "prettier.useTabs": true,
     "editor.detectIndentation": false,
     "editor.indentSize": "tabSize",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "typescript.preferences.importModuleSpecifier": "relative"
 }

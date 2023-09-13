@@ -11,9 +11,10 @@ import {
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { ActiveUser } from 'src/auth/decorators/active-user/active-user.decorator';
-import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
+
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
+import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 
 @Controller('boards')
 @ApiTags('Boards')

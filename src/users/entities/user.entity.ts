@@ -1,7 +1,8 @@
 import { Exclude } from 'class-transformer';
 import { MaxLength } from 'class-validator';
-import { Board } from 'src/kanban/boards/entities/board.entity';
-import { Task } from 'src/kanban/tasks/entities/task.entity';
+import { Board } from '../../kanban/boards/entities/board.entity';
+
+import { Task } from '../../kanban/tasks/entities/task.entity';
 import {
 	Column,
 	Entity,

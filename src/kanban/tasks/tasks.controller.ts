@@ -11,7 +11,7 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ActiveUser } from 'src/auth/decorators/active-user/active-user.decorator';
+import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
 
 @ApiTags('Tasks')
 @ApiBearerAuth()

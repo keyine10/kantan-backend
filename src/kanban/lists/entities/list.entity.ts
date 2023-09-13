@@ -1,7 +1,7 @@
 import { Max, Min } from 'class-validator';
-import { POSITION_INTERVAL } from 'src/kanban/common/constants';
-import { Board } from 'src/kanban/boards/entities/board.entity';
-import { Task } from 'src/kanban/tasks/entities/task.entity';
+import { POSITION_INTERVAL } from '../../common/constants';
+import { Board } from '../../boards/entities/board.entity';
+import { Task } from '../../tasks/entities/task.entity';
 import {
 	Entity,
 	PrimaryGeneratedColumn,

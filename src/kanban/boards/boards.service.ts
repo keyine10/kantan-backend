@@ -8,8 +8,8 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from './entities/board.entity';
 import { ArrayContains, Repository } from 'typeorm';
-import { User } from 'src/users/entities/user.entity';
-import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
+import { User } from '../../users/entities/user.entity';
+import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 
 @Injectable()
 export class BoardsService {

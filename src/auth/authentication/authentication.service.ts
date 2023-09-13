@@ -2,12 +2,12 @@ import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HashingService } from '../hashing/hashing.service';
-import { User } from 'src/users/entities/user.entity';
 import { SignInDto } from './dto/sign-in.dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto/sign-up.dto';
 import jwtConfig from './config/jwt.config';
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '../../users/entities/user.entity';
 
 @Injectable()
 export class AuthenticationService {
@@ -27,6 +27,11 @@ export class AuthenticationService {
 			user.name = signUpDto.name;
 			user.password = await this.hashingService.hash(signUpDto.password);
 			await this.userRepository.save(user);
+			return {
+				id: user.id,
+				name: user.name,
+				email: user.email,
+			};
 		} catch (err) {
 			if (err.code === '23505') throw new ConflictException();
 			throw err;

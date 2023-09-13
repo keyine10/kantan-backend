@@ -7,7 +7,7 @@ import {
 	Min,
 	MinLength,
 } from 'class-validator';
-import { POSITION_INTERVAL } from 'src/kanban/common/constants';
+import { POSITION_INTERVAL } from '../../common/constants';
 
 export class CreateTaskDto {
 	@IsString()

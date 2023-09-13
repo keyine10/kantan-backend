@@ -9,8 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { List } from './entities/list.entity';
 import { Repository } from 'typeorm';
 import { Board } from '../boards/entities/board.entity';
-import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
-
+import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 @Injectable()
 export class ListsService {
 	constructor(
