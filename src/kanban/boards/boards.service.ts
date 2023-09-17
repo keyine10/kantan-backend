@@ -45,7 +45,7 @@ export class BoardsService {
 		let board = await this.boardRepository.findOne({
 			// user must be a member
 			where: [{ id, members: [{ id: user.id }] }],
-			relations: ['lists', 'tasks', 'members', 'creator'],
+			relations: ['lists.tasks', 'members', 'creator'],
 		});
 		if (!board)
 			throw new NotFoundException(

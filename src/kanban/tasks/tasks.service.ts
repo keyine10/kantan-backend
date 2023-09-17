@@ -42,7 +42,16 @@ export class TasksService {
 			creator: boardInDb.creator,
 		});
 
-		return this.taskRepository.save(newTask);
+		let savedTask = await this.taskRepository.save(newTask);
+		return {
+			name: savedTask.name,
+			position: savedTask.position,
+			id: savedTask.id,
+			description: savedTask.description,
+			createdAt: savedTask.createdAt,
+			updatedAt: savedTask.updatedAt,
+			listId: savedTask.list.id,
+		};
 	}
 
 	findAll() {

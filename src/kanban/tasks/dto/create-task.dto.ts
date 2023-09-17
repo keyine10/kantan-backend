@@ -18,9 +18,6 @@ export class CreateTaskDto {
 	@IsString()
 	listId: string;
 
-	@IsString()
-	boardId: string;
-
 	@IsNumber()
 	@Max(POSITION_INTERVAL * 1000)
 	@Min(0.25)

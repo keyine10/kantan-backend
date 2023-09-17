@@ -13,6 +13,7 @@ import { User } from '../../../users/entities/user.entity';
 import { POSITION_INTERVAL } from '../../common/constants';
 import { Board } from '../../boards/entities/board.entity';
 import { List } from '../../lists/entities/list.entity';
+import { DecimalColumnTransformer } from '../../../commons/utils/decimal-transformer';
 
 @Entity('tasks')
 export class Task {
@@ -22,10 +23,15 @@ export class Task {
 	@Column()
 	name: string;
 
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
-	@Column({ type: 'decimal', precision: 10, scale: 3 })
+	@Column({
+		type: 'decimal',
+		precision: 10,
+		scale: 3,
+		transformer: new DecimalColumnTransformer(),
+	})
 	@Max(POSITION_INTERVAL * 1000) //maximum of 1000 cards
 	@Min(1)
 	position: number;

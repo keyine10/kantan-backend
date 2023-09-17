@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Injectable,
 	NotFoundException,
 	UnauthorizedException,
@@ -10,6 +11,7 @@ import { List } from './entities/list.entity';
 import { Repository } from 'typeorm';
 import { Board } from '../boards/entities/board.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
+import { isUUID } from 'class-validator';
 @Injectable()
 export class ListsService {
 	constructor(
@@ -20,6 +22,8 @@ export class ListsService {
 	) {}
 
 	async create(createListDto: CreateListDto, user: ActiveUserData) {
+		if (!isUUID(createListDto.boardId))
+			throw new BadRequestException('Board id is not valid UUID');
 		const boardInDb = await this.boardRepository.findOne({
 			where: { id: createListDto.boardId },
 			relations: ['members'],
@@ -38,6 +42,8 @@ export class ListsService {
 	}
 
 	async findAll(boardId: string, user: ActiveUserData) {
+		if (!isUUID(boardId))
+			throw new BadRequestException('Board id is not valid UUID');
 		const boardInDb = await this.boardRepository.findOne({
 			where: { id: boardId },
 			relations: ['members'],

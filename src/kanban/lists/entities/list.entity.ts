@@ -10,6 +10,7 @@ import {
 	OneToMany,
 	Double,
 } from 'typeorm';
+import { DecimalColumnTransformer } from '../../../commons/utils/decimal-transformer';
 
 @Entity('lists')
 export class List {
@@ -19,7 +20,11 @@ export class List {
 	@Column()
 	name: string;
 
-	@Column({ type: 'decimal', scale: 3 })
+	@Column({
+		type: 'decimal',
+		scale: 3,
+		transformer: new DecimalColumnTransformer(),
+	})
 	@Max(POSITION_INTERVAL * 1000) //maximum of 1000 lists
 	@Min(1)
 	position: number;
