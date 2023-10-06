@@ -93,9 +93,9 @@ export class ListsService {
 	) {
 		const listInDb = await this.listRepository.findOne({
 			where: { id },
-			relations: ['board.members', 'tasks', 'board.id'],
+			relations: ['board.members', 'tasks'],
 		});
-
+		console.log(listInDb);
 		if (!listInDb) {
 			return new NotFoundException('List does not exist');
 		}
