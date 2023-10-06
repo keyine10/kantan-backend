@@ -66,6 +66,11 @@ export class ListsService {
 		let listInDb = await this.listRepository.findOne({
 			where: { id },
 			relations: ['tasks', 'board.members'],
+			order: {
+				tasks: {
+					position: 'ASC',
+				},
+			},
 		});
 
 		if (!listInDb) {

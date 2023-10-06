@@ -38,6 +38,9 @@ export class BoardsService {
 				{ members: [{ id: user.id }] },
 			],
 			relations: ['members'],
+			order: {
+				createdAt: 'DESC',
+			},
 		});
 	}
 
@@ -46,6 +49,14 @@ export class BoardsService {
 			// user must be a member
 			where: [{ id, members: [{ id: user.id }] }],
 			relations: ['lists.tasks', 'members', 'creator'],
+			order: {
+				lists: {
+					position: 'ASC',
+					tasks: {
+						position: 'ASC',
+					},
+				},
+			},
 		});
 		if (!board)
 			throw new NotFoundException(
