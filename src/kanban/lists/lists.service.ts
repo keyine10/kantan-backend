@@ -37,6 +37,7 @@ export class ListsService {
 		const newList = this.listRepository.create({
 			...createListDto,
 			board: boardInDb,
+			tasks: [],
 		});
 		return this.listRepository.save(newList);
 	}
