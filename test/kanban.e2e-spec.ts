@@ -468,7 +468,7 @@ describe('Kanban End-to-end', () => {
 						name: 'new task',
 						position: 8192,
 						listId: testList.id,
-					});
+					})
 				});
 		});
 

@@ -8,6 +8,7 @@ import {
 	OneToMany,
 	CreateDateColumn,
 	UpdateDateColumn,
+	JoinColumn,
 } from 'typeorm';
 import { User } from '../../../users/entities/user.entity';
 import { POSITION_INTERVAL } from '../../common/constants';
@@ -43,7 +44,11 @@ export class Task {
 	updatedAt: Date;
 
 	@ManyToOne(() => List, (list) => list.tasks, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'listId', referencedColumnName: 'id' })
 	list: List;
+
+	@Column()
+	listId: string;
 
 	@ManyToOne(() => Board, (board) => board.tasks, { onDelete: 'CASCADE' })
 	board: Board;
