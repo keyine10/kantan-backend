@@ -88,7 +88,7 @@ export class ListsService {
 	) {
 		const listInDb = await this.listRepository.findOne({
 			where: { id },
-			relations: ['board.members'],
+			relations: ['board.members', 'tasks', 'board.id'],
 		});
 
 		if (!listInDb) {
