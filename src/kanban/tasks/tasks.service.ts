@@ -88,19 +88,28 @@ export class TasksService {
 
 		const boardInDb = taskInDb.board;
 		const listInDb = taskInDb.list;
-
+		const updatedList = await this.listRepository.findOne({
+			where: { id: updateTaskDto.listId },
+		});
+		if (updatedList !== listInDb) {
+			console.log('update task into a new list');
+		}
 		if (!boardInDb.members.find((member) => member.id === user.id)) {
 			return new UnauthorizedException(
 				'User does not have access to board',
 			);
 		}
-
-		const updatedTask = await this.taskRepository.preload({
+		const preloadTask = {
 			...taskInDb,
 			...updateTaskDto,
-		});
+		};
+		if (listInDb !== updatedList) {
+			preloadTask.list = updatedList;
+		}
+		const updatedTask = await this.taskRepository.preload(preloadTask);
 
-		return this.taskRepository.save(updatedTask);
+		let savedTask = await this.taskRepository.save(updatedTask);
+		return savedTask;
 	}
 
 	async remove(id: string, user: ActiveUserData) {
