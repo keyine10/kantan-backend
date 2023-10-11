@@ -26,6 +26,6 @@ export class CreateTaskDto {
 	@IsString()
 	@IsOptional()
 	@MaxLength(255)
-	@MinLength(1)
+	@MinLength(0)
 	description: string;
 }
