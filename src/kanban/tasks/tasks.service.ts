@@ -107,7 +107,7 @@ export class TasksService {
 			preloadTask.list = updatedList;
 		}
 		const updatedTask = await this.taskRepository.preload(preloadTask);
-
+		//TODO: reorder tasks in list if position between tasks are too small
 		let savedTask = await this.taskRepository.save(updatedTask);
 		return savedTask;
 	}
