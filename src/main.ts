@@ -35,7 +35,10 @@ async function bootstrap() {
 	SwaggerModule.setup('api', app, document);
 
 	await app.listen(3001);
+
 	console.log('Application is running on: http://localhost:3001');
 	console.log('Swagger UI is running on: http://localhost:3001/api');
+
+	app.enableShutdownHooks();
 }
 bootstrap();

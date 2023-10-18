@@ -1,7 +1,9 @@
 import {
+	Inject,
 	Injectable,
 	NotFoundException,
 	UnauthorizedException,
+	forwardRef,
 } from '@nestjs/common';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
@@ -10,7 +12,7 @@ import { Board } from './entities/board.entity';
 import { ArrayContains, Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
-
+import { KanbanGateWay } from '../gateway/kanban.gateway';
 @Injectable()
 export class BoardsService {
 	constructor(
@@ -18,6 +20,8 @@ export class BoardsService {
 		private readonly boardRepository: Repository<Board>,
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+		@Inject(KanbanGateWay)
+		private readonly kanbanGateway: KanbanGateWay,
 	) {}
 	async create(createBoardDto: CreateBoardDto, user: ActiveUserData) {
 		const userInDb = await this.userRepository.findOneBy({ id: user.id });
@@ -29,7 +33,6 @@ export class BoardsService {
 		const savedBoard = await this.boardRepository.save(createBoard);
 		return savedBoard;
 	}
-
 	findAll(user: ActiveUserData) {
 		return this.boardRepository.find({
 			// user is creator or a member
@@ -62,6 +65,9 @@ export class BoardsService {
 			throw new NotFoundException(
 				"Board doesn't exist or user is unauthorized",
 			);
+		this.kanbanGateway.server
+			.to(board.id)
+			.emit('message', 'hello from board services findOne()');
 		return board;
 	}
 
@@ -74,6 +80,10 @@ export class BoardsService {
 		let updatedBoard = await this.boardRepository.preload({
 			id: id,
 			...updateBoardDto,
+		});
+		this.kanbanGateway.server.to(boardInDb.id).emit('message', {
+			message: 'hello from board services update()',
+			content: updatedBoard,
 		});
 
 		return this.boardRepository.save(updatedBoard);
@@ -98,7 +108,7 @@ export class BoardsService {
 		});
 		if (!boardInDb) throw new NotFoundException('Cannot find board');
 		if (!boardInDb.members.find((member) => member.id === user.id)) {
-			return new UnauthorizedException(
+			throw new UnauthorizedException(
 				'User does not have access to board',
 			);
 		}

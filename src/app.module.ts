@@ -4,6 +4,8 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { KanbanModule } from './kanban/kanban.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
 	imports: [
@@ -26,7 +28,7 @@ import { KanbanModule } from './kanban/kanban.module';
 		KanbanModule,
 	],
 
-	controllers: [],
-	providers: [],
+	controllers: [AppController],
+	providers: [AppService],
 })
 export class AppModule {}

@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+	ConflictException,
+	Inject,
+	Injectable,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HashingService } from '../hashing/hashing.service';
@@ -19,6 +24,20 @@ export class AuthenticationService {
 		@Inject(jwtConfig.KEY)
 		private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
 	) {}
+
+	async verifyToken(token: string) {
+		console.log('verifying token', token);
+		try {
+			const decoded = await this.jwtService.verifyAsync(token, {
+				...this.jwtConfiguration,
+			});
+			// request.user = decoded;
+			return decoded;
+		} catch (err) {
+			throw new UnauthorizedException();
+		}
+		return true;
+	}
 
 	async signUp(signUpDto: SignUpDto) {
 		try {

@@ -15,6 +15,8 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
+import { AuthType } from '../../auth/authentication/enums/auth-type.enum';
+import { Auth } from '../../auth/authentication/decorators/auth.decorator';
 
 @Controller('boards')
 @ApiTags('Boards')
