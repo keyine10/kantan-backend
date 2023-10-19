@@ -3,13 +3,12 @@ import {
 	Injectable,
 	NotFoundException,
 	UnauthorizedException,
-	forwardRef,
 } from '@nestjs/common';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from './entities/board.entity';
-import { ArrayContains, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { KanbanGateWay } from '../gateway/kanban.gateway';
@@ -81,12 +80,22 @@ export class BoardsService {
 			id: id,
 			...updateBoardDto,
 		});
+
+		let connectedUsers = await this.kanbanGateway.server
+			.in(boardInDb.id)
+			.fetchSockets();
+		let sender = connectedUsers.find((socket: any) => {
+			return socket.user.id === user.id;
+		});
+		const savedBoard = await this.boardRepository.save(updatedBoard);
+
 		this.kanbanGateway.server.to(boardInDb.id).emit('message', {
 			message: 'hello from board services update()',
-			content: updatedBoard,
+			content: savedBoard,
+			sender: user.id,
 		});
 
-		return this.boardRepository.save(updatedBoard);
+		return savedBoard;
 	}
 
 	async remove(id: string, user: ActiveUserData) {
@@ -113,5 +122,32 @@ export class BoardsService {
 			);
 		}
 		return boardInDb;
+	}
+	async addMember(id: string, memberId: string, user: ActiveUserData) {
+		const boardInDb = await this.boardRepository.findOne({
+			where: { id },
+			relations: ['members'],
+		});
+		if (!boardInDb) throw new NotFoundException('Cannot find board');
+		if (boardInDb.creatorId !== user.id)
+			throw new UnauthorizedException(
+				'User does not have permission to add member',
+			);
+		//TODO: add member
+		return;
+	}
+	async removeMember(id: string, memberId: string, user: ActiveUserData) {
+		const boardInDb = await this.boardRepository.findOne({
+			where: { id },
+			relations: ['members'],
+		});
+		if (!boardInDb) throw new NotFoundException('Cannot find board');
+		if (boardInDb.creatorId !== user.id)
+			throw new UnauthorizedException(
+				'User does not have permission to remove member',
+			);
+
+		//TODO: remove member
+		return;
 	}
 }

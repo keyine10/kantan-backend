@@ -26,7 +26,6 @@ export class AuthenticationService {
 	) {}
 
 	async verifyToken(token: string) {
-		console.log('verifying token', token);
 		try {
 			const decoded = await this.jwtService.verifyAsync(token, {
 				...this.jwtConfiguration,
@@ -62,7 +61,6 @@ export class AuthenticationService {
 			select: ['id', 'password', 'name', 'email', 'bio'],
 		});
 		if (!user) throw new ConflictException();
-		// TODO: password comparison doesnt work, any password will login
 		let compare = await this.hashingService.compare(
 			signInDto.password,
 			user.password,

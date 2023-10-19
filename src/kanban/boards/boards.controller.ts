@@ -55,4 +55,22 @@ export class BoardsController {
 	remove(@Param('id') id: string, @ActiveUser() user: ActiveUserData) {
 		return this.boardsService.remove(id, user);
 	}
+
+	@Post(':id/members/:memberId')
+	addMember(
+		@Param('id') id: string,
+		@Param('memberId') memberId: string,
+		@ActiveUser() user: ActiveUserData,
+	) {
+		return this.boardsService.addMember(id, memberId, user);
+	}
+
+	@Delete(':id/members/:memberId')
+	removeMember(
+		@Param('id') id: string,
+		@Param('memberId') memberId: string,
+		@ActiveUser() user: ActiveUserData,
+	) {
+		return this.boardsService.removeMember(id, memberId, user);
+	}
 }

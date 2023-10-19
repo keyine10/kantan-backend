@@ -1,13 +1,8 @@
-import {
-	Inject,
-	OnModuleInit,
-	UnauthorizedException,
-	UseGuards,
-	forwardRef,
-} from '@nestjs/common';
+import { OnModuleInit } from '@nestjs/common';
 import {
 	MessageBody,
 	OnGatewayConnection,
+	OnGatewayDisconnect,
 	OnGatewayInit,
 	SubscribeMessage,
 	WebSocketGateway,
@@ -17,12 +12,11 @@ import {
 
 import { Server, Socket } from 'socket.io';
 import { AuthenticationService } from '../../auth/authentication/authentication.service';
-import { BoardsService } from '../boards/boards.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from '../boards/entities/board.entity';
 import { Repository } from 'typeorm';
 @WebSocketGateway(80)
-export class KanbanGateWay implements OnModuleInit {
+export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 	@WebSocketServer()
 	server: Server;
 
@@ -32,24 +26,45 @@ export class KanbanGateWay implements OnModuleInit {
 		private readonly boardRepository: Repository<Board>,
 	) {}
 	onModuleInit() {
-		this.server.on('connection', async (socket) => {
+		this.server.on('connection', async (socket: Socket & any) => {
 			const token = socket.handshake.headers.authorization?.split(' ')[1];
 			if (!token) {
 				this.server.to(socket.id).emit('error', 'Unauthorized');
 				socket.disconnect();
 			}
-			console.log(token);
 			socket.join(socket.id);
 			try {
 				const res = await this.authenticationService.verifyToken(token);
-				console.log(res);
-				this.server.to(socket.id).emit('message', 'hello ' + res.name);
+				this.server
+					.to(socket.id)
+					.emit('message', 'hello ' + res.name + ' ' + res.id);
+				//join each user's room with userid
+				socket.join(`${res.id}`);
+				socket.user = res;
 			} catch (e) {
-				console.log(e);
-				this.server.to(socket.id).emit('error', 'Unauthorized');
+				this.server.to(socket.id).emit('error', e);
 				socket.disconnect();
 			}
+			socket.on('disconnecting', () => {
+				console.log('Client disconnecting:', socket.id);
+				console.log('client disconnecting from rooms:', socket.rooms);
+				socket.rooms.forEach((room) => {
+					this.server
+						.to(room)
+						.except(`${socket.user.id}`)
+						.emit('onUserLeave', {
+							id: socket.user.id,
+							email: socket.user.email,
+							name: socket.user.name,
+						});
+				});
+			});
 		});
+	}
+	handleDisconnect(client: Socket) {
+		// console.log('Client disconnected:', client.id);
+		// console.log(client.rooms);
+		// client.disconnect();
 	}
 
 	@SubscribeMessage('message')
@@ -60,12 +75,41 @@ export class KanbanGateWay implements OnModuleInit {
 		});
 	}
 	@SubscribeMessage('join-room')
-	async onJoinRoom(client: Socket, data) {
+	async onJoinRoom(client: Socket & { user: any }, data) {
 		console.log(data);
 		client.join(data.id);
-		let board = await this.boardRepository.findOneBy({ id: data.id });
-		// TODO: check if user is a member
-		this.server.to(data.id).emit('message', 'hello room ' + board.title);
+		try {
+			let board = await this.boardRepository.findOne({
+				// user must be a member
+				where: [{ id: data.id }],
+				relations: ['members'],
+			});
+			if (!board) {
+				this.server.to(client.id).emit('error', 'Board does not exist');
+				return;
+			}
+			//TODO: disallow if not member
+			if (!board.members.find((member) => member.id === client.user.id)) {
+				this.server
+					.to(client.id)
+					.emit('error', 'You are not a member of this board');
+			}
+			//private message to user
+			this.server
+				.to(client.id)
+				.emit('message', 'welcome to room ' + board.title);
+
+			//notify other users in room whenever a user join
+			client.broadcast.to(board.id).emit('onUserJoin', {
+				id: client.user.id,
+				email: client.user.email,
+				name: client.user.name,
+			});
+		} catch (e) {
+			this.server.to(client.id).emit('error', 'Cannot find board');
+			return;
+		}
+
 		// this.server.on('connection', (socket) => {
 		//     socket.join(body.id);
 		//     this.server.to(body.id).emit('message', 'hello');
