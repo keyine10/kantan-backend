@@ -5,7 +5,7 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ArrayContains, Repository } from 'typeorm';
 import { HashingService } from '../hashing/hashing.service';
 import { SignInDto } from './dto/sign-in.dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto/sign-up.dto';
@@ -13,12 +13,15 @@ import jwtConfig from './config/jwt.config';
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../../users/entities/user.entity';
+import { Board } from '../../kanban/boards/entities/board.entity';
 
 @Injectable()
 export class AuthenticationService {
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+		@InjectRepository(Board)
+		private readonly boardRepository: Repository<Board>,
 		private readonly hashingService: HashingService,
 		private readonly jwtService: JwtService,
 		@Inject(jwtConfig.KEY)
@@ -44,11 +47,28 @@ export class AuthenticationService {
 			user.email = signUpDto.email;
 			user.name = signUpDto.name;
 			user.password = await this.hashingService.hash(signUpDto.password);
-			await this.userRepository.save(user);
+			const savedUser = await this.userRepository.save(user);
+			// find all boards with user's email in their pendingMembers and add the user to board
+			const boards = await this.boardRepository.find({
+				where: {
+					pendingMembers: ArrayContains([user.email]),
+				},
+				relations: ['members'],
+			});
+			Promise.all(
+				boards.map(async (board) => {
+					board.members.push(savedUser);
+					board.pendingMembers = board.pendingMembers.filter(
+						(email) => email !== user.email,
+					);
+					return this.boardRepository.save(board);
+				}),
+			);
+			console.log('boards member of:', boards);
 			return {
-				id: user.id,
-				name: user.name,
-				email: user.email,
+				id: savedUser.id,
+				name: savedUser.name,
+				email: savedUser.email,
 			};
 		} catch (err) {
 			if (err.code === '23505') throw new ConflictException();

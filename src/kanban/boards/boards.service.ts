@@ -1,4 +1,5 @@
 import {
+	ConflictException,
 	Inject,
 	Injectable,
 	NotFoundException,
@@ -11,7 +12,7 @@ import { Board } from './entities/board.entity';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
-import { KanbanGateWay } from '../gateway/kanban.gateway';
+import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
 @Injectable()
 export class BoardsService {
 	constructor(
@@ -28,6 +29,7 @@ export class BoardsService {
 			...createBoardDto,
 			creatorId: userInDb.id,
 			members: [userInDb],
+			pendingMembers: [],
 		});
 		const savedBoard = await this.boardRepository.save(createBoard);
 		return savedBoard;
@@ -64,9 +66,6 @@ export class BoardsService {
 			throw new NotFoundException(
 				"Board doesn't exist or user is unauthorized",
 			);
-		this.kanbanGateway.server
-			.to(board.id)
-			.emit('message', 'hello from board services findOne()');
 		return board;
 	}
 
@@ -84,9 +83,9 @@ export class BoardsService {
 		let connectedUsers = await this.kanbanGateway.server
 			.in(boardInDb.id)
 			.fetchSockets();
-		let sender = connectedUsers.find((socket: any) => {
-			return socket.user.id === user.id;
-		});
+		// let sender = connectedUsers.find((socket: any) => {
+		// 	return socket.user.id === user.id;
+		// });
 		const savedBoard = await this.boardRepository.save(updatedBoard);
 
 		this.kanbanGateway.server.to(boardInDb.id).emit('message', {
@@ -123,7 +122,7 @@ export class BoardsService {
 		}
 		return boardInDb;
 	}
-	async addMember(id: string, memberId: string, user: ActiveUserData) {
+	async addMember(id: string, email: string, user: ActiveUserData) {
 		const boardInDb = await this.boardRepository.findOne({
 			where: { id },
 			relations: ['members'],
@@ -133,10 +132,31 @@ export class BoardsService {
 			throw new UnauthorizedException(
 				'User does not have permission to add member',
 			);
-		//TODO: add member
-		return;
+		if (user.email === email) {
+			throw new ConflictException(
+				'Cannot remove board creator from board',
+			);
+		}
+		const userInDb = await this.userRepository.findOneBy({ email });
+		if (
+			userInDb &&
+			!boardInDb.members.find((member) => member.id === userInDb.id)
+		)
+			boardInDb.members.push(userInDb);
+		else if (boardInDb.pendingMembers.includes(email)) {
+			throw new ConflictException('Email is already in use');
+		} else boardInDb.pendingMembers.push(email);
+
+		const savedBoard = await this.boardRepository.save(boardInDb);
+		this.kanbanGateway.server
+			.to(boardInDb.id)
+			.emit(EVENTS.BOARD_MEMBERS_UPDATED, {
+				members: savedBoard.members,
+				pendingMembers: savedBoard.pendingMembers,
+			});
+		return savedBoard;
 	}
-	async removeMember(id: string, memberId: string, user: ActiveUserData) {
+	async removeMember(id: string, email: string, user: ActiveUserData) {
 		const boardInDb = await this.boardRepository.findOne({
 			where: { id },
 			relations: ['members'],
@@ -148,6 +168,22 @@ export class BoardsService {
 			);
 
 		//TODO: remove member
-		return;
+		const userInDb = await this.userRepository.findOneBy({ email });
+		if (userInDb) {
+			boardInDb.members = boardInDb.members.filter(
+				(user) => user.id !== userInDb.id,
+			);
+		}
+		boardInDb.pendingMembers = boardInDb.pendingMembers.filter(
+			(pendingEmail) => pendingEmail !== email,
+		);
+		const savedBoard = await this.boardRepository.save(boardInDb);
+		this.kanbanGateway.server
+			.to(boardInDb.id)
+			.emit(EVENTS.BOARD_MEMBERS_UPDATED, {
+				members: savedBoard.members,
+				pendingMembers: savedBoard.pendingMembers,
+			});
+		return savedBoard;
 	}
 }

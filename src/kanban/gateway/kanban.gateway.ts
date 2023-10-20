@@ -15,6 +15,15 @@ import { AuthenticationService } from '../../auth/authentication/authentication.
 import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from '../boards/entities/board.entity';
 import { Repository } from 'typeorm';
+
+export const EVENTS = {
+	NEW_BOARD: 'new-board',
+	BOARD_UPDATED: 'board-updated',
+	BOARD_ACTIVE_MEMBERS: 'board-active-members',
+	BOARD_MEMBERS_UPDATED: 'board-members-updated',
+	BOARD_JOIN: 'board-join',
+};
+
 @WebSocketGateway(80)
 export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 	@WebSocketServer()
@@ -26,38 +35,52 @@ export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 		private readonly boardRepository: Repository<Board>,
 	) {}
 	onModuleInit() {
-		this.server.on('connection', async (socket: Socket & any) => {
+		this.server.on('connection', async (socket: Socket & { user: any }) => {
 			const token = socket.handshake.headers.authorization?.split(' ')[1];
 			if (!token) {
 				this.server.to(socket.id).emit('error', 'Unauthorized');
 				socket.disconnect();
 			}
-			socket.join(socket.id);
+			// socket.join(socket.id);
 			try {
 				const res = await this.authenticationService.verifyToken(token);
 				this.server
 					.to(socket.id)
 					.emit('message', 'hello ' + res.name + ' ' + res.id);
 				//join each user's room with userid
-				socket.join(`${res.id}`);
+				// socket.join(`${res.id}`);
 				socket.user = res;
 			} catch (e) {
 				this.server.to(socket.id).emit('error', e);
 				socket.disconnect();
 			}
-			socket.on('disconnecting', () => {
+			socket.on('disconnecting', async () => {
 				console.log('Client disconnecting:', socket.id);
 				console.log('client disconnecting from rooms:', socket.rooms);
-				socket.rooms.forEach((room) => {
-					this.server
-						.to(room)
-						.except(`${socket.user.id}`)
-						.emit('onUserLeave', {
-							id: socket.user.id,
-							email: socket.user.email,
-							name: socket.user.name,
-						});
+				let rooms = Array.from(socket.rooms);
+				// always the board room since each socket can only connect to 2 rooms
+				const boardRoom = rooms[1];
+
+				//update active members in board after user left
+				let activeMembers = (
+					await this.server.in(boardRoom).fetchSockets()
+				)
+					.map((activeSocket: any) => activeSocket.user)
+					.filter((member) => member.id !== socket.user.id);
+				this.server.to(boardRoom).emit(EVENTS.BOARD_ACTIVE_MEMBERS, {
+					activeMembers,
 				});
+
+				// socket.rooms.forEach((room) => {
+				// 	this.server
+				// 		.to(room)
+				// 		.except(`${socket.user.id}`)
+				// 		.emit(EVENTS.BOARD_ACTIVE_MEMBERS, {
+				// 			id: socket.user.id,
+				// 			email: socket.user.email,
+				// 			name: socket.user.name,
+				// 		});
+				// });
 			});
 		});
 	}
@@ -74,9 +97,15 @@ export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 			content: body,
 		});
 	}
-	@SubscribeMessage('join-room')
-	async onJoinRoom(client: Socket & { user: any }, data) {
+	@SubscribeMessage(EVENTS.BOARD_JOIN)
+	async onJoinBoard(client: Socket & { user: any }, data) {
 		console.log(data);
+		if (client.rooms.size === 2 && client.rooms.has(data.id)) {
+			this.server
+				.to(client.id)
+				.emit('error', 'You can only join one board per socket');
+			return;
+		}
 		client.join(data.id);
 		try {
 			let board = await this.boardRepository.findOne({
@@ -99,14 +128,17 @@ export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 				.to(client.id)
 				.emit('message', 'welcome to room ' + board.title);
 
-			//notify other users in room whenever a user join
-			client.broadcast.to(board.id).emit('onUserJoin', {
-				id: client.user.id,
-				email: client.user.email,
-				name: client.user.name,
+			//update room's active members list when user joins
+			const activeMembers = (
+				await this.server.in(data.id).fetchSockets()
+			).map((socket: any) => {
+				return socket.user;
+			});
+			this.server.to(board.id).emit(EVENTS.BOARD_ACTIVE_MEMBERS, {
+				activeMembers,
 			});
 		} catch (e) {
-			this.server.to(client.id).emit('error', 'Cannot find board');
+			this.server.to(client.id).emit('error', 'Cannot join board');
 			return;
 		}
 

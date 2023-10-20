@@ -42,6 +42,9 @@ export class Board {
 	@ManyToMany(() => User, (user) => user.memberBoards)
 	members: User[];
 
+	@Column('text', { array: true, default: [] })
+	pendingMembers: string[];
+
 	@OneToMany(() => List, (list) => list.board, { onDelete: 'CASCADE' })
 	lists: List[];
 

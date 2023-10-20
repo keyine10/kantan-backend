@@ -15,8 +15,7 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
-import { AuthType } from '../../auth/authentication/enums/auth-type.enum';
-import { Auth } from '../../auth/authentication/decorators/auth.decorator';
+import { UpdateBoardMembersDto } from './dto/update-board-members.dto';
 
 @Controller('boards')
 @ApiTags('Boards')
@@ -56,21 +55,29 @@ export class BoardsController {
 		return this.boardsService.remove(id, user);
 	}
 
-	@Post(':id/members/:memberId')
+	@Post(':id/members/')
 	addMember(
 		@Param('id') id: string,
-		@Param('memberId') memberId: string,
+		@Body() updateBoardMembersDto: UpdateBoardMembersDto,
 		@ActiveUser() user: ActiveUserData,
 	) {
-		return this.boardsService.addMember(id, memberId, user);
+		return this.boardsService.addMember(
+			id,
+			updateBoardMembersDto.email,
+			user,
+		);
 	}
 
-	@Delete(':id/members/:memberId')
+	@Delete(':id/members/')
 	removeMember(
 		@Param('id') id: string,
-		@Param('memberId') memberId: string,
+		@Body() updateBoardMembersDto: UpdateBoardMembersDto,
 		@ActiveUser() user: ActiveUserData,
 	) {
-		return this.boardsService.removeMember(id, memberId, user);
+		return this.boardsService.removeMember(
+			id,
+			updateBoardMembersDto.email,
+			user,
+		);
 	}
 }

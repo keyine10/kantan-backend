@@ -11,10 +11,11 @@ import { AuthenticationGuard } from './authentication/guards/authentication/auth
 import { AccessTokenGuard } from './authentication/guards/access-token/access-token.guard';
 import { User } from '../users/entities/user.entity';
 import { APP_GUARD } from '@nestjs/core';
+import { Board } from '../kanban/boards/entities/board.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([User]),
+		TypeOrmModule.forFeature([User, Board]),
 		ConfigModule.forFeature(jwtConfig),
 		JwtModule.registerAsync({
 			imports: [ConfigModule],
