@@ -88,8 +88,8 @@ export class BoardsService {
 		// });
 		const savedBoard = await this.boardRepository.save(updatedBoard);
 
-		this.kanbanGateway.server.to(boardInDb.id).emit('message', {
-			message: 'hello from board services update()',
+		this.kanbanGateway.server.to(boardInDb.id).emit(EVENTS.BOARD_UPDATED, {
+			message: 'Board Updated',
 			content: savedBoard,
 			sender: user.id,
 		});
@@ -107,6 +107,11 @@ export class BoardsService {
 			);
 		if (board.creatorId !== user.id) return new UnauthorizedException();
 		await this.boardRepository.remove(board);
+		this.kanbanGateway.server.to(board.id).emit(EVENTS.BOARD_DELETED, {
+			message: 'Board deleted',
+			sender: user.id,
+		});
+		this.kanbanGateway.server.in(board.id).disconnectSockets();
 		return;
 	}
 	async authorizeBoardMembers(boardId: string, user: ActiveUserData) {

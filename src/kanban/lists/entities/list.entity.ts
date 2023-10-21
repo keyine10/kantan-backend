@@ -1,4 +1,4 @@
-import { Max, Min } from 'class-validator';
+import { ArrayMaxSize, Max, Min } from 'class-validator';
 import { POSITION_INTERVAL } from '../../common/constants';
 import { Board } from '../../boards/entities/board.entity';
 import { Task } from '../../tasks/entities/task.entity';
@@ -25,14 +25,14 @@ export class List {
 		scale: 3,
 		transformer: new DecimalColumnTransformer(),
 	})
-	@Max(POSITION_INTERVAL * 1000) //maximum of 1000 lists
 	@Min(1)
 	position: number;
 
 	@ManyToOne(() => Board, (board) => board.lists, { onDelete: 'CASCADE' })
 	board: Board;
 
-	@OneToMany(() => Task, (task) => task.list)
+	@OneToMany(() => Task, (task) => task.list, { onDelete: 'CASCADE' })
+	@ArrayMaxSize(100)
 	tasks: Task[];
 
 	// Add more properties and methods as needed

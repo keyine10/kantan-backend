@@ -1,1 +1,1 @@
-export const POSITION_INTERVAL = 8192;
+export const POSITION_INTERVAL = 65536;

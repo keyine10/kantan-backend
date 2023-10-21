@@ -11,7 +11,6 @@ import {
 	JoinColumn,
 } from 'typeorm';
 import { User } from '../../../users/entities/user.entity';
-import { POSITION_INTERVAL } from '../../common/constants';
 import { Board } from '../../boards/entities/board.entity';
 import { List } from '../../lists/entities/list.entity';
 import { DecimalColumnTransformer } from '../../../commons/utils/decimal-transformer';
@@ -33,7 +32,6 @@ export class Task {
 		scale: 3,
 		transformer: new DecimalColumnTransformer(),
 	})
-	@Max(POSITION_INTERVAL * 1000) //maximum of 1000 cards
 	@Min(1)
 	position: number;
 

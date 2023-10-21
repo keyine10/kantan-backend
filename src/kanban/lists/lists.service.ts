@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	Inject,
 	Injectable,
 	NotFoundException,
 	UnauthorizedException,
@@ -12,6 +13,8 @@ import { Repository } from 'typeorm';
 import { Board } from '../boards/entities/board.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { isUUID } from 'class-validator';
+import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
+import { POSITION_INTERVAL } from '../common/constants';
 @Injectable()
 export class ListsService {
 	constructor(
@@ -19,6 +22,8 @@ export class ListsService {
 		private readonly boardRepository: Repository<Board>,
 		@InjectRepository(List)
 		private readonly listRepository: Repository<List>,
+		@Inject(KanbanGateWay)
+		private readonly kanbanGateway: KanbanGateWay,
 	) {}
 
 	async create(createListDto: CreateListDto, user: ActiveUserData) {
@@ -26,7 +31,7 @@ export class ListsService {
 			throw new BadRequestException('Board id is not valid UUID');
 		const boardInDb = await this.boardRepository.findOne({
 			where: { id: createListDto.boardId },
-			relations: ['members'],
+			relations: ['members', 'lists'],
 		});
 		if (!boardInDb) throw new NotFoundException('Cannot find board');
 		if (!boardInDb.members.find((member) => member.id === user.id)) {
@@ -34,12 +39,24 @@ export class ListsService {
 				'User does not have access to board',
 			);
 		}
+		let position =
+			boardInDb.lists.length > 0
+				? boardInDb.lists[boardInDb.lists.length - 1]?.position +
+				  POSITION_INTERVAL
+				: POSITION_INTERVAL;
 		const newList = this.listRepository.create({
 			...createListDto,
 			board: boardInDb,
 			tasks: [],
+			position: position,
 		});
-		return this.listRepository.save(newList);
+		let savedList = await this.listRepository.save(newList);
+		delete savedList.board;
+		this.kanbanGateway.server.emit(EVENTS.LIST_CREATED, {
+			message: 'List created',
+			content: savedList,
+		});
+		return savedList;
 	}
 
 	async findAll(boardId: string, user: ActiveUserData) {
@@ -93,7 +110,7 @@ export class ListsService {
 	) {
 		const listInDb = await this.listRepository.findOne({
 			where: { id },
-			relations: ['board.members', 'tasks'],
+			relations: ['board.members'],
 		});
 		console.log(listInDb);
 		if (!listInDb) {
@@ -106,10 +123,20 @@ export class ListsService {
 			);
 		}
 		const newList = await this.listRepository.preload({
+			...listInDb,
 			id: id,
 			...updateListDto,
 		});
-		return this.listRepository.save(newList);
+		let savedList = await this.listRepository.save(newList);
+		delete savedList.board;
+		delete listInDb.board;
+		this.kanbanGateway.server.emit(EVENTS.LIST_UPDATED, {
+			message: 'List Updated',
+			content: savedList,
+			sender: user.id,
+			_old: listInDb,
+		});
+		return savedList;
 	}
 
 	async remove(id: string, user: ActiveUserData) {
@@ -128,6 +155,12 @@ export class ListsService {
 			);
 		}
 		await this.listRepository.remove(listInDb);
+		delete listInDb.board;
+		this.kanbanGateway.server.emit(EVENTS.LIST_DELETED, {
+			message: 'List deleted',
+			sender: user.id,
+			content: listInDb,
+		});
 		return;
 	}
 }

@@ -13,6 +13,7 @@ import {
 	CreateDateColumn,
 	UpdateDateColumn,
 } from 'typeorm';
+import { ArrayMaxSize } from 'class-validator';
 
 @Entity()
 export class Board {
@@ -46,6 +47,7 @@ export class Board {
 	pendingMembers: string[];
 
 	@OneToMany(() => List, (list) => list.board, { onDelete: 'CASCADE' })
+	@ArrayMaxSize(1000)
 	lists: List[];
 
 	@OneToMany(() => Task, (task) => task.board, { onDelete: 'CASCADE' })
