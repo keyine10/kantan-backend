@@ -33,7 +33,7 @@ export const EVENTS = {
 	LIST_TASKS_UPDATED: 'list-tasks-updated',
 };
 
-@WebSocketGateway(8080, {
+@WebSocketGateway({
 	cors: {
 		origin: '*',
 	},
