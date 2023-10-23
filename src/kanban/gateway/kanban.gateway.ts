@@ -33,7 +33,7 @@ export const EVENTS = {
 	LIST_TASKS_UPDATED: 'list-tasks-updated',
 };
 
-@WebSocketGateway(80)
+@WebSocketGateway(8080)
 export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 	@WebSocketServer()
 	server: Server;

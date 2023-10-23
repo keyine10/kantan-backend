@@ -36,8 +36,8 @@ async function bootstrap() {
 
 	await app.listen(3001);
 
-	console.log('Application is running on: http://localhost:3001');
-	console.log('Swagger UI is running on: http://localhost:3001/api');
+	console.log(`Application is running on: ${await app.getUrl()}`);
+	console.log(`Swagger UI is running on: ${await app.getUrl()}/api`);
 
 	app.enableShutdownHooks();
 }
