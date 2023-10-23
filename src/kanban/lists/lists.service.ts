@@ -51,7 +51,6 @@ export class ListsService {
 			position: position,
 		});
 		let savedList = await this.listRepository.save(newList);
-		delete savedList.board;
 		this.kanbanGateway.server.emit(EVENTS.LIST_CREATED, {
 			message: 'List created',
 			content: savedList,
@@ -159,7 +158,7 @@ export class ListsService {
 		this.kanbanGateway.server.emit(EVENTS.LIST_DELETED, {
 			message: 'List deleted',
 			sender: user.id,
-			content: listInDb,
+			content: { ...listInDb, id },
 		});
 		return;
 	}

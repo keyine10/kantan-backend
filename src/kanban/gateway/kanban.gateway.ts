@@ -59,7 +59,7 @@ export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 				const res = await this.authenticationService.verifyToken(token);
 				this.server
 					.to(socket.id)
-					.emit('message', 'hello ' + res.name + ' ' + res.id);
+					.emit('authorized', 'hello ' + res.name + ' ' + res.id);
 				//join each user's room with userid
 				// socket.join(`${res.id}`);
 				socket.user = res;

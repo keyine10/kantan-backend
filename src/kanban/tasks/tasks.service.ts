@@ -156,9 +156,10 @@ export class TasksService {
 
 		await this.taskRepository.remove(taskInDb);
 		delete taskInDb.board;
+		delete taskInDb.list;
 		this.kanbanGateway.server.emit(EVENTS.TASK_DELETED, {
 			message: 'Task Deleted',
-			content: taskInDb,
+			content: { ...taskInDb, id },
 			sender: user.id,
 		});
 		return;
