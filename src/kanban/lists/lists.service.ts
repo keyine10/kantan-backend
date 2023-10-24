@@ -33,6 +33,7 @@ export class ListsService {
 			where: { id: createListDto.boardId },
 			relations: ['members', 'lists'],
 		});
+		const boardId = boardInDb.id;
 		if (!boardInDb) throw new NotFoundException('Cannot find board');
 		if (!boardInDb.members.find((member) => member.id === user.id)) {
 			return new UnauthorizedException(
@@ -51,7 +52,7 @@ export class ListsService {
 			position: position,
 		});
 		let savedList = await this.listRepository.save(newList);
-		this.kanbanGateway.server.emit(EVENTS.LIST_CREATED, {
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.LIST_CREATED, {
 			message: 'List created',
 			content: savedList,
 		});
@@ -111,7 +112,8 @@ export class ListsService {
 			where: { id },
 			relations: ['board.members'],
 		});
-		console.log(listInDb);
+		const boardId = listInDb.board.id;
+		console.log('updating list', listInDb);
 		if (!listInDb) {
 			return new NotFoundException('List does not exist');
 		}
@@ -129,7 +131,7 @@ export class ListsService {
 		let savedList = await this.listRepository.save(newList);
 		delete savedList.board;
 		delete listInDb.board;
-		this.kanbanGateway.server.emit(EVENTS.LIST_UPDATED, {
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.LIST_UPDATED, {
 			message: 'List Updated',
 			content: savedList,
 			sender: user.id,
@@ -143,7 +145,7 @@ export class ListsService {
 			where: { id },
 			relations: ['board.members'],
 		});
-
+		const boardId = listInDb.board.id;
 		if (!listInDb) {
 			return new NotFoundException('List does not exist');
 		}
@@ -155,7 +157,7 @@ export class ListsService {
 		}
 		await this.listRepository.remove(listInDb);
 		delete listInDb.board;
-		this.kanbanGateway.server.emit(EVENTS.LIST_DELETED, {
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.LIST_DELETED, {
 			message: 'List deleted',
 			sender: user.id,
 			content: { ...listInDb, id },

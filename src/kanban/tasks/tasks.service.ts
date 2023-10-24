@@ -34,6 +34,7 @@ export class TasksService {
 		if (!listInDb) return new NotFoundException('List not found');
 
 		const boardInDb = listInDb.board;
+		const boardId = boardInDb.id;
 		if (!boardInDb.members.find((member) => member.id === user.id)) {
 			return new UnauthorizedException(
 				'User does not have access to board',
@@ -62,7 +63,7 @@ export class TasksService {
 			updatedAt: savedTask.updatedAt,
 			listId: savedTask.list.id,
 		};
-		this.kanbanGateway.server.emit(EVENTS.TASK_CREATED, {
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_CREATED, {
 			message: 'Task created',
 			content: returnedTask,
 			sender: user.id,
@@ -104,6 +105,7 @@ export class TasksService {
 		if (!taskInDb) return new NotFoundException('Task not found');
 
 		const boardInDb = taskInDb.board;
+		const boardId = boardInDb.id;
 		const listInDb = taskInDb.list;
 		const updatedList = await this.listRepository.findOne({
 			where: { id: updateTaskDto.listId },
@@ -130,7 +132,7 @@ export class TasksService {
 		delete savedTask.board;
 		delete savedTask.list;
 		delete taskInDb.list;
-		this.kanbanGateway.server.emit(EVENTS.TASK_UPDATED, {
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_UPDATED, {
 			message: 'Task Updated',
 			content: savedTask,
 			sender: user.id,
@@ -153,11 +155,12 @@ export class TasksService {
 				'User does not have access to board',
 			);
 		}
+		let boardId = boardInDb.id;
 
 		await this.taskRepository.remove(taskInDb);
 		delete taskInDb.board;
 		delete taskInDb.list;
-		this.kanbanGateway.server.emit(EVENTS.TASK_DELETED, {
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_DELETED, {
 			message: 'Task Deleted',
 			content: { ...taskInDb, id },
 			sender: user.id,
