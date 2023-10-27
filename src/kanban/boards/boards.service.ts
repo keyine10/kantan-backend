@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	ConflictException,
 	Inject,
 	Injectable,
@@ -13,6 +14,7 @@ import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
+import { isUUID } from 'class-validator';
 @Injectable()
 export class BoardsService {
 	constructor(
@@ -51,7 +53,7 @@ export class BoardsService {
 	async findOne(id: string, user: ActiveUserData) {
 		let board = await this.boardRepository.findOne({
 			// user must be a member
-			where: [{ id, members: [{ id: user.id }] }],
+			where: [{ id }],
 			relations: ['lists.tasks', 'members', 'creator'],
 			order: {
 				lists: {
@@ -62,6 +64,11 @@ export class BoardsService {
 				},
 			},
 		});
+		if (!board.members.find((member) => member.id === user.id)) {
+			throw new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
 		if (!board)
 			throw new NotFoundException(
 				"Board doesn't exist or user is unauthorized",
@@ -75,6 +82,7 @@ export class BoardsService {
 		user: ActiveUserData,
 	) {
 		const boardInDb = await this.authorizeBoardMembers(id, user);
+		if (!boardInDb) throw new NotFoundException('Cannot find board');
 		let updatedBoard = await this.boardRepository.preload({
 			id: id,
 			...updateBoardDto,
