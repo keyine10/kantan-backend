@@ -75,15 +75,19 @@ export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 				const boardRoom = rooms[1];
 
 				//update active members in board after user left
-				let activeMembers = (
+				const activeMembers = (
 					await this.server.in(boardRoom).fetchSockets()
-				)
-					.map((activeSocket: any) => activeSocket.user)
-					.filter((member) => member.id !== socket.user.id);
-				this.server.to(boardRoom).emit(EVENTS.BOARD_ACTIVE_MEMBERS, {
-					activeMembers,
+				).map((socket: any) => {
+					return socket.user;
 				});
-
+				const activeMembersMap = new Map();
+				activeMembers.map((member) => {
+					activeMembersMap.set(member.id, member);
+				});
+				console.log(activeMembersMap);
+				this.server.to(boardRoom).emit(EVENTS.BOARD_ACTIVE_MEMBERS, {
+					activeMembers: Array.from(activeMembersMap.values()),
+				});
 				// socket.rooms.forEach((room) => {
 				// 	this.server
 				// 		.to(room)
@@ -147,8 +151,13 @@ export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 			).map((socket: any) => {
 				return socket.user;
 			});
+			const activeMembersMap = new Map();
+			activeMembers.map((member) => {
+				activeMembersMap.set(member.id, member);
+			});
+			console.log(activeMembersMap);
 			this.server.to(board.id).emit(EVENTS.BOARD_ACTIVE_MEMBERS, {
-				activeMembers,
+				activeMembers: Array.from(activeMembersMap.values()),
 			});
 		} catch (e) {
 			this.server.to(client.id).emit('error', 'Cannot join board');
