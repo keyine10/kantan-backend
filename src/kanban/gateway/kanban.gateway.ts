@@ -77,9 +77,11 @@ export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
 				//update active members in board after user left
 				const activeMembers = (
 					await this.server.in(boardRoom).fetchSockets()
-				).map((socket: any) => {
-					return socket.user;
-				});
+				)
+					.filter((s: any) => s.id !== socket.id)
+					.map((s: any) => {
+						return s.user;
+					});
 				const activeMembersMap = new Map();
 				activeMembers.map((member) => {
 					activeMembersMap.set(member.id, member);

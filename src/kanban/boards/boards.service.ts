@@ -196,6 +196,7 @@ export class BoardsService {
 			.emit(EVENTS.BOARD_MEMBERS_UPDATED, {
 				members: savedBoard.members,
 				pendingMembers: savedBoard.pendingMembers,
+				removedMember: userInDb ? userInDb : null,
 			});
 		return savedBoard;
 	}
