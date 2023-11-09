@@ -59,6 +59,9 @@ export class Task {
 	@ManyToOne(() => User, (user) => user.tasks)
 	creator: User;
 
+	@Column({ nullable: true })
+	backgroundColor: string;
+
 	// TODO: checklists and labels
 	// @OneToMany(() => Checklist, (checklist) => checklist.task)
 	// checklists: Checklist[];

@@ -11,4 +11,7 @@ export class AttachmentDto {
 
 	@IsString()
 	mimetype: string;
+
+	@IsString()
+	path: string;
 }

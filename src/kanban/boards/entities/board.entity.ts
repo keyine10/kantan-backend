@@ -39,6 +39,9 @@ export class Board {
 	@Column()
 	creatorId: number;
 
+	@Column({ nullable: true })
+	backgroundColor: string;
+
 	// @JoinColumn({ name: 'membersId', referencedColumnName: 'id' })
 	@ManyToMany(() => User, (user) => user.memberBoards)
 	members: User[];
