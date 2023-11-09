@@ -17,7 +17,7 @@ export class Attachment {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
-	@Column({ nullable: false })
+	@Column({ nullable: false, unique: true })
 	name: string;
 
 	@CreateDateColumn()

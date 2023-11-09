@@ -12,6 +12,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
+import { AttachmentDto } from './dto/attachment.dto';
 
 @ApiTags('Tasks')
 @ApiBearerAuth()
@@ -46,5 +47,23 @@ export class TasksController {
 	@Delete(':id')
 	remove(@Param('id') id: string, @ActiveUser() user) {
 		return this.tasksService.remove(id, user);
+	}
+
+	@Post(':id/attachments')
+	addAttachment(
+		@Param('id') id: string,
+		@Body() attachmentDto: AttachmentDto,
+		@ActiveUser() user,
+	) {
+		return this.tasksService.addAttachment(id, user, attachmentDto);
+	}
+
+	@Delete(':id/attachments/:attachmentId')
+	removeAttachment(
+		@Param('id') id: string,
+		@ActiveUser() user,
+		@Param('attachmentId') attachmentId: string,
+	) {
+		return this.tasksService.removeAttachment(id, user, attachmentId);
 	}
 }

@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Inject,
 	Injectable,
 	NotFoundException,
@@ -16,6 +17,7 @@ import { POSITION_INTERVAL } from '../common/constants';
 import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
 import { AttachmentDto } from './dto/attachment.dto';
 import { SupabaseService } from '../../commons/supabase.service';
+import { Attachment } from './entities/attachment.entity';
 @Injectable()
 export class TasksService {
 	constructor(
@@ -25,6 +27,8 @@ export class TasksService {
 		private readonly listRepository: Repository<List>,
 		@InjectRepository(Task)
 		private readonly taskRepository: Repository<Task>,
+		@InjectRepository(Attachment)
+		private readonly attachmentRepository: Repository<Attachment>,
 		@Inject(KanbanGateWay)
 		private readonly kanbanGateway: KanbanGateWay,
 		private readonly supabaseService: SupabaseService,
@@ -176,5 +180,84 @@ export class TasksService {
 			where: { id },
 			relations: ['list', 'board.members', 'attachments'],
 		});
+		if (!taskInDb) return new NotFoundException('Task not found');
+
+		const boardInDb = taskInDb.board;
+		let boardId = boardInDb.id;
+
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		let findAttachment = await this.attachmentRepository.findOne({
+			where: { name: file.name },
+		});
+		if (findAttachment) {
+			return new BadRequestException('Attachment already exists');
+		}
+		let newAttachment = this.attachmentRepository.create({
+			...file,
+			task: taskInDb,
+		});
+		let savedAttachment = await this.attachmentRepository.save(
+			newAttachment,
+		);
+		delete taskInDb.board;
+		delete taskInDb.list;
+		delete savedAttachment.task;
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_UPDATED, {
+			message: 'Attachment added',
+			content: {
+				...taskInDb,
+				attachments: [...taskInDb.attachments, savedAttachment],
+			},
+			_old: taskInDb,
+			sender: user.id,
+		});
+		return {
+			...taskInDb,
+			attachments: [...taskInDb.attachments, savedAttachment],
+		};
+	}
+	async removeAttachment(
+		id: string,
+		user: ActiveUserData,
+		attachmentId: string,
+	) {
+		const taskInDb = await this.taskRepository.findOne({
+			where: { id },
+			relations: ['list', 'board.members', 'attachments'],
+		});
+		if (!taskInDb) return new NotFoundException('Task not found');
+
+		const boardInDb = taskInDb.board;
+		let boardId = boardInDb.id;
+
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		const attachment = await this.attachmentRepository.findOne({
+			where: { id: attachmentId },
+		});
+		if (!attachment) return new NotFoundException('Attachment not found');
+		await this.attachmentRepository.remove(attachment);
+
+		delete taskInDb.board;
+		delete taskInDb.list;
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_UPDATED, {
+			message: 'Attachment removed',
+			content: {
+				...taskInDb,
+				attachments: taskInDb.attachments.filter(
+					(attachment) => attachment.id !== attachmentId,
+				),
+			},
+			_old: taskInDb,
+			sender: user.id,
+		});
+		return;
 	}
 }

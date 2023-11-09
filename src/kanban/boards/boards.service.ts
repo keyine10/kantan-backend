@@ -80,11 +80,6 @@ export class BoardsService {
 			throw new NotFoundException(
 				"Board doesn't exist or user is unauthorized",
 			);
-		const { data, error } = await this.supabaseService
-			.getClient()
-			.storage.from('dump')
-			.list('temporary folder');
-		console.log(data);
 		return board;
 	}
 
@@ -132,6 +127,12 @@ export class BoardsService {
 			sender: user.id,
 		});
 		this.kanbanGateway.server.in(board.id).disconnectSockets();
+
+		//TODO: delete attachments
+		// this.supabaseService.getClient().storage.from('attachment').list(board.id).then(async (result) => {
+
+		// });
+
 		return;
 	}
 	async authorizeBoardMembers(boardId: string, user: ActiveUserData) {
