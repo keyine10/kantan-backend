@@ -15,6 +15,7 @@ import { User } from '../../users/entities/user.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
 import { isUUID } from 'class-validator';
+import { SupabaseService } from '../../commons/supabase.service';
 @Injectable()
 export class BoardsService {
 	constructor(
@@ -24,6 +25,7 @@ export class BoardsService {
 		private readonly userRepository: Repository<User>,
 		@Inject(KanbanGateWay)
 		private readonly kanbanGateway: KanbanGateWay,
+		private readonly supabaseService: SupabaseService,
 	) {}
 	async create(createBoardDto: CreateBoardDto, user: ActiveUserData) {
 		const userInDb = await this.userRepository.findOneBy({ id: user.id });
@@ -54,7 +56,12 @@ export class BoardsService {
 		let board = await this.boardRepository.findOne({
 			// user must be a member
 			where: [{ id }],
-			relations: ['lists.tasks', 'members', 'creator'],
+			relations: [
+				'lists.tasks',
+				'members',
+				'creator',
+				'lists.tasks.attachments',
+			],
 			order: {
 				lists: {
 					position: 'ASC',
@@ -73,6 +80,11 @@ export class BoardsService {
 			throw new NotFoundException(
 				"Board doesn't exist or user is unauthorized",
 			);
+		const { data, error } = await this.supabaseService
+			.getClient()
+			.storage.from('dump')
+			.list('temporary folder');
+		console.log(data);
 		return board;
 	}
 

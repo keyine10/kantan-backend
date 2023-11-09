@@ -14,6 +14,8 @@ import { Task } from './entities/task.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { POSITION_INTERVAL } from '../common/constants';
 import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
+import { AttachmentDto } from './dto/attachment.dto';
+import { SupabaseService } from '../../commons/supabase.service';
 @Injectable()
 export class TasksService {
 	constructor(
@@ -25,6 +27,7 @@ export class TasksService {
 		private readonly taskRepository: Repository<Task>,
 		@Inject(KanbanGateWay)
 		private readonly kanbanGateway: KanbanGateWay,
+		private readonly supabaseService: SupabaseService,
 	) {}
 	async create(createTaskDto: CreateTaskDto, user: ActiveUserData) {
 		const listInDb = await this.listRepository.findOne({
@@ -51,6 +54,7 @@ export class TasksService {
 			board: boardInDb,
 			creator: boardInDb.creator,
 			position: position,
+			attachments: [],
 		});
 
 		let savedTask = await this.taskRepository.save(newTask);
@@ -100,7 +104,7 @@ export class TasksService {
 	) {
 		const taskInDb = await this.taskRepository.findOne({
 			where: { id },
-			relations: ['list', 'board.members', 'creator'],
+			relations: ['list', 'board.members', 'creator', 'attachments'],
 		});
 		if (!taskInDb) return new NotFoundException('Task not found');
 
@@ -166,5 +170,11 @@ export class TasksService {
 			sender: user.id,
 		});
 		return;
+	}
+	async addAttachment(id: string, user: ActiveUserData, file: AttachmentDto) {
+		const taskInDb = await this.taskRepository.findOne({
+			where: { id },
+			relations: ['list', 'board.members', 'attachments'],
+		});
 	}
 }

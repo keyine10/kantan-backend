@@ -12,7 +12,7 @@ import { POSITION_INTERVAL } from '../../common/constants';
 export class CreateTaskDto {
 	@IsString()
 	@MinLength(1)
-	@MaxLength(50)
+	@MaxLength(255)
 	name: string;
 
 	@IsString()

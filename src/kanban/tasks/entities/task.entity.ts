@@ -14,6 +14,7 @@ import { User } from '../../../users/entities/user.entity';
 import { Board } from '../../boards/entities/board.entity';
 import { List } from '../../lists/entities/list.entity';
 import { DecimalColumnTransformer } from '../../../commons/utils/decimal-transformer';
+import { Attachment } from './attachment.entity';
 
 @Entity('tasks')
 export class Task {
@@ -49,7 +50,11 @@ export class Task {
 	listId: string;
 
 	@ManyToOne(() => Board, (board) => board.tasks, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'boardId', referencedColumnName: 'id' })
 	board: Board;
+
+	@Column()
+	boardId: string;
 
 	@ManyToOne(() => User, (user) => user.tasks)
 	creator: User;
@@ -57,6 +62,12 @@ export class Task {
 	// TODO: checklists and labels
 	// @OneToMany(() => Checklist, (checklist) => checklist.task)
 	// checklists: Checklist[];
+
+	@OneToMany(() => Attachment, (attachment) => attachment.task, {
+		onDelete: 'CASCADE',
+		nullable: true,
+	})
+	attachments: Attachment[];
 
 	// @OneToMany(() => Label, (label) => label.task)
 	// labels: Label[];

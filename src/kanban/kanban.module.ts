@@ -10,15 +10,17 @@ import { TasksController } from './tasks/tasks.controller';
 import { BoardsService } from './boards/boards.service';
 import { ListsService } from './lists/lists.service';
 import { TasksService } from './tasks/tasks.service';
-import { KanbanGateWay } from './gateway/kanban.gateway';
 import { AuthModule } from '../auth/auth.module';
 import { KanbanWsModule } from './gateway/kanbanws.module';
+import { Attachment } from './tasks/entities/attachment.entity';
+import { SupabaseModule } from '../commons/supabase.module';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([User, Board, List, Task]),
+		TypeOrmModule.forFeature([User, Board, List, Task, Attachment]),
 		AuthModule,
 		KanbanWsModule,
+		SupabaseModule,
 	],
 	controllers: [BoardsController, ListsController, TasksController],
 	providers: [BoardsService, ListsService, TasksService],
