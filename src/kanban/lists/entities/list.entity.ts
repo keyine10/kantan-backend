@@ -28,6 +28,9 @@ export class List {
 	@Min(1)
 	position: number;
 
+	@Column({ nullable: true })
+	backgroundColor: string;
+
 	@ManyToOne(() => Board, (board) => board.lists, { onDelete: 'CASCADE' })
 	board: Board;
 

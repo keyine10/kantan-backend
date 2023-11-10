@@ -8,4 +8,8 @@ export class UpdateListDto extends PartialType(CreateListDto) {
 	@IsBoolean()
 	@IsOptional()
 	rebalance: boolean;
+
+	@IsString()
+	@IsOptional()
+	backgroundColor: string;
 }
