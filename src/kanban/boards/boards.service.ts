@@ -14,7 +14,7 @@ import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
-import { isUUID } from 'class-validator';
+import { IsUUID, isUUID } from 'class-validator';
 import { SupabaseService } from '../../commons/supabase.service';
 @Injectable()
 export class BoardsService {
@@ -33,6 +33,7 @@ export class BoardsService {
 			...createBoardDto,
 			creatorId: userInDb.id,
 			members: [userInDb],
+			backgroundColor: '#CBD5E0',
 			pendingMembers: [],
 		});
 		const savedBoard = await this.boardRepository.save(createBoard);
@@ -47,12 +48,14 @@ export class BoardsService {
 			],
 			relations: ['members'],
 			order: {
-				createdAt: 'DESC',
+				updatedAt: 'DESC',
 			},
 		});
 	}
 
 	async findOne(id: string, user: ActiveUserData) {
+		if (!isUUID(id))
+			throw new BadRequestException('Board id is not valid UUID');
 		let board = await this.boardRepository.findOne({
 			// user must be a member
 			where: [{ id }],
@@ -61,6 +64,7 @@ export class BoardsService {
 				'members',
 				'creator',
 				'lists.tasks.attachments',
+				'lists.tasks.tags',
 			],
 			order: {
 				lists: {
@@ -71,6 +75,7 @@ export class BoardsService {
 				},
 			},
 		});
+		if (!board) throw new NotFoundException('Cannot find board');
 		if (!board.members.find((member) => member.id === user.id)) {
 			throw new UnauthorizedException(
 				'User does not have access to board',
@@ -113,8 +118,9 @@ export class BoardsService {
 	}
 
 	async remove(id: string, user: ActiveUserData) {
-		let board = await this.boardRepository.findOneBy({
-			id,
+		let board = await this.boardRepository.findOne({
+			where: [{ id }],
+			relations: ['tasks', 'tasks.attachments'],
 		});
 		if (!board)
 			return new NotFoundException(
@@ -128,10 +134,15 @@ export class BoardsService {
 		});
 		this.kanbanGateway.server.in(board.id).disconnectSockets();
 
-		//TODO: delete attachments
-		// this.supabaseService.getClient().storage.from('attachment').list(board.id).then(async (result) => {
-
-		// });
+		//delete all attachments
+		let filePaths = board.tasks.map((task) => {
+			return task.attachments.map((attachment) => attachment.path);
+		});
+		this.supabaseService
+			.getClient()
+			.storage.from('attachment')
+			.remove(filePaths.flat());
+		await this.boardRepository.remove(board);
 
 		return;
 	}

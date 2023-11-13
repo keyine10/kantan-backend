@@ -13,6 +13,8 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
 import { AttachmentDto } from './dto/attachment.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateTagDto } from './dto/update-tag.dto';
 
 @ApiTags('Tasks')
 @ApiBearerAuth()
@@ -65,5 +67,33 @@ export class TasksController {
 		@Param('attachmentId') attachmentId: string,
 	) {
 		return this.tasksService.removeAttachment(id, user, attachmentId);
+	}
+
+	@Post(':id/tags')
+	addTag(
+		@Param('id') id: string,
+		@Body() CreateTagDto: CreateTagDto,
+		@ActiveUser() user,
+	) {
+		return this.tasksService.addTag(id, user, CreateTagDto);
+	}
+
+	@Patch(':id/tags/:tagId')
+	updateTag(
+		@Param('id') id: string,
+		@Body() UpdateTagDto: CreateTagDto,
+		@ActiveUser() user,
+		@Param('tagId') tagId: string,
+	) {
+		return this.tasksService.updateTag(id, user, tagId, UpdateTagDto);
+	}
+
+	@Delete(':id/tags/:tagId')
+	removeTag(
+		@Param('id') id: string,
+		@ActiveUser() user,
+		@Param('tagId') tagId: string,
+	) {
+		return this.tasksService.removeTag(id, user, tagId);
 	}
 }

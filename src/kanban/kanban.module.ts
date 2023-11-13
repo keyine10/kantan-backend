@@ -14,10 +14,11 @@ import { AuthModule } from '../auth/auth.module';
 import { KanbanWsModule } from './gateway/kanbanws.module';
 import { Attachment } from './tasks/entities/attachment.entity';
 import { SupabaseModule } from '../commons/supabase.module';
+import { Tag } from './tasks/entities/tag.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([User, Board, List, Task, Attachment]),
+		TypeOrmModule.forFeature([User, Board, List, Task, Attachment, Tag]),
 		AuthModule,
 		KanbanWsModule,
 		SupabaseModule,

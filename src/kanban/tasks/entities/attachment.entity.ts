@@ -5,10 +5,8 @@ import {
 	PrimaryGeneratedColumn,
 	Column,
 	ManyToOne,
-	OneToMany,
 	CreateDateColumn,
 	UpdateDateColumn,
-	JoinColumn,
 } from 'typeorm';
 import { Task } from './task.entity';
 
@@ -34,7 +32,7 @@ export class Attachment {
 	@Column()
 	mimetype: string;
 
-	@ManyToOne(() => Task, (task) => task.attachments)
+	@ManyToOne(() => Task, (task) => task.attachments, { onDelete: 'CASCADE' })
 	task: Task;
 }
 

@@ -15,6 +15,7 @@ import { Board } from '../../boards/entities/board.entity';
 import { List } from '../../lists/entities/list.entity';
 import { DecimalColumnTransformer } from '../../../commons/utils/decimal-transformer';
 import { Attachment } from './attachment.entity';
+import { Tag } from './tag.entity';
 
 @Entity('tasks')
 export class Task {
@@ -72,8 +73,9 @@ export class Task {
 	})
 	attachments: Attachment[];
 
-	// @OneToMany(() => Label, (label) => label.task)
-	// labels: Label[];
-
-	// Add more properties and methods as needed
+	@OneToMany(() => Tag, (tag) => tag.task, {
+		onDelete: 'CASCADE',
+		nullable: true,
+	})
+	tags: Tag[];
 }

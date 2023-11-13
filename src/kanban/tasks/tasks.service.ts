@@ -18,6 +18,9 @@ import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
 import { AttachmentDto } from './dto/attachment.dto';
 import { SupabaseService } from '../../commons/supabase.service';
 import { Attachment } from './entities/attachment.entity';
+import { Tag } from './entities/tag.entity';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateTagDto } from './dto/update-tag.dto';
 @Injectable()
 export class TasksService {
 	constructor(
@@ -29,8 +32,11 @@ export class TasksService {
 		private readonly taskRepository: Repository<Task>,
 		@InjectRepository(Attachment)
 		private readonly attachmentRepository: Repository<Attachment>,
+		@InjectRepository(Tag)
+		private readonly tagRepository: Repository<Tag>,
 		@Inject(KanbanGateWay)
 		private readonly kanbanGateway: KanbanGateWay,
+
 		private readonly supabaseService: SupabaseService,
 	) {}
 	async create(createTaskDto: CreateTaskDto, user: ActiveUserData) {
@@ -59,6 +65,7 @@ export class TasksService {
 			creator: boardInDb.creator,
 			position: position,
 			attachments: [],
+			tags: [],
 		});
 
 		let savedTask = await this.taskRepository.save(newTask);
@@ -70,6 +77,10 @@ export class TasksService {
 			createdAt: savedTask.createdAt,
 			updatedAt: savedTask.updatedAt,
 			listId: savedTask.list.id,
+			boardId: savedTask.board.id,
+			creatorId: savedTask.creator.id,
+			attachments: savedTask.attachments,
+			tags: [],
 		};
 		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_CREATED, {
 			message: 'Task created',
@@ -108,7 +119,13 @@ export class TasksService {
 	) {
 		const taskInDb = await this.taskRepository.findOne({
 			where: { id },
-			relations: ['list', 'board.members', 'creator', 'attachments'],
+			relations: [
+				'list',
+				'board.members',
+				'creator',
+				'attachments',
+				'tags',
+			],
 		});
 		if (!taskInDb) return new NotFoundException('Task not found');
 
@@ -152,7 +169,7 @@ export class TasksService {
 	async remove(id: string, user: ActiveUserData) {
 		const taskInDb = await this.taskRepository.findOne({
 			where: { id },
-			relations: ['list', 'board.members'],
+			relations: ['list', 'board.members', 'attachments'],
 		});
 		if (!taskInDb) return new NotFoundException('Task not found');
 
@@ -164,6 +181,16 @@ export class TasksService {
 			);
 		}
 		let boardId = boardInDb.id;
+
+		const attachments = taskInDb.attachments;
+		let filePaths = attachments.map((attachment) => {
+			return attachment.path;
+		});
+
+		this.supabaseService
+			.getClient()
+			.storage.from('attachment')
+			.remove(filePaths);
 
 		await this.taskRepository.remove(taskInDb);
 		delete taskInDb.board;
@@ -178,7 +205,7 @@ export class TasksService {
 	async addAttachment(id: string, user: ActiveUserData, file: AttachmentDto) {
 		const taskInDb = await this.taskRepository.findOne({
 			where: { id },
-			relations: ['list', 'board.members', 'attachments'],
+			relations: ['list', 'board.members', 'attachments', 'tags'],
 		});
 		if (!taskInDb) return new NotFoundException('Task not found');
 
@@ -191,7 +218,7 @@ export class TasksService {
 			);
 		}
 		let findAttachment = await this.attachmentRepository.findOne({
-			where: { name: file.name },
+			where: { path: file.path },
 		});
 		if (findAttachment) {
 			return new BadRequestException('Attachment already exists');
@@ -227,7 +254,7 @@ export class TasksService {
 	) {
 		const taskInDb = await this.taskRepository.findOne({
 			where: { id },
-			relations: ['list', 'board.members', 'attachments'],
+			relations: ['list', 'board.members', 'attachments', 'tags'],
 		});
 		if (!taskInDb) return new NotFoundException('Task not found');
 
@@ -259,5 +286,138 @@ export class TasksService {
 			sender: user.id,
 		});
 		return;
+	}
+
+	async addTag(id: string, user: ActiveUserData, tag: CreateTagDto) {
+		const taskInDb = await this.taskRepository.findOne({
+			where: { id },
+			relations: [
+				'board.members',
+				'board.members',
+				'tags',
+				'creator',
+				'attachments',
+			],
+		});
+		if (!taskInDb) return new NotFoundException('Task not found');
+
+		const boardInDb = taskInDb.board;
+		let boardId = boardInDb.id;
+
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		let newTag = this.tagRepository.create({
+			...tag,
+			task: taskInDb,
+		});
+		let savedTag = await this.tagRepository.save(newTag);
+		delete taskInDb.board;
+		delete taskInDb.list;
+		delete savedTag.task;
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_UPDATED, {
+			message: 'Tag added',
+			content: {
+				...taskInDb,
+				tags: [...taskInDb.tags, savedTag],
+			},
+			_old: taskInDb,
+			sender: user.id,
+		});
+	}
+
+	async updateTag(
+		id: string,
+		user: ActiveUserData,
+		tagId: string,
+		tag: UpdateTagDto,
+	) {
+		const taskInDb = await this.taskRepository.findOne({
+			where: { id },
+			relations: [
+				'board.members',
+				'board.members',
+				'tags',
+				'creator',
+				'attachments',
+			],
+		});
+		if (!taskInDb) return new NotFoundException('Task not found');
+
+		const boardInDb = taskInDb.board;
+		let boardId = boardInDb.id;
+
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+
+		let findTag = await this.tagRepository.findOne({
+			where: { id: tagId },
+		});
+		if (!findTag) return new NotFoundException('Tag not found');
+		let preloadTag = await this.tagRepository.preload({
+			...findTag,
+			...tag,
+		});
+		let savedTag = await this.tagRepository.save(preloadTag);
+		delete taskInDb.board;
+		delete taskInDb.list;
+		delete savedTag.task;
+
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_UPDATED, {
+			message: 'Tag updated',
+			content: {
+				...taskInDb,
+				tags: taskInDb.tags.map((tag) => {
+					if (tag.id === savedTag.id) {
+						return savedTag;
+					}
+					return tag;
+				}),
+			},
+			_old: taskInDb,
+			sender: user.id,
+		});
+	}
+	async removeTag(id: string, user: ActiveUserData, tagId: string) {
+		const taskInDb = await this.taskRepository.findOne({
+			where: { id },
+			relations: [
+				'board.members',
+				'tags',
+				'creator',
+				'attachments',
+				'tags',
+			],
+		});
+		if (!taskInDb) return new NotFoundException('Task not found');
+
+		const boardInDb = taskInDb.board;
+		let boardId = boardInDb.id;
+
+		if (!boardInDb.members.find((member) => member.id === user.id)) {
+			return new UnauthorizedException(
+				'User does not have access to board',
+			);
+		}
+		let findTag = await this.tagRepository.findOne({
+			where: { id: tagId },
+		});
+		if (!findTag) return new NotFoundException('Tag not found');
+		await this.tagRepository.remove(findTag);
+		delete taskInDb.board;
+		this.kanbanGateway.server.to(boardId).emit(EVENTS.TASK_UPDATED, {
+			message: 'Tag removed',
+			content: {
+				...taskInDb,
+				tags: taskInDb.tags.filter((tag) => tag.id !== tagId),
+			},
+			_old: taskInDb,
+			sender: user.id,
+		});
 	}
 }

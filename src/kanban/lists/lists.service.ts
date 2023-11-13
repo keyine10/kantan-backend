@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Inject,
 	Injectable,
+	InternalServerErrorException,
 	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface
 import { isUUID } from 'class-validator';
 import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
 import { POSITION_INTERVAL } from '../common/constants';
+import { SupabaseService } from '../../commons/supabase.service';
 @Injectable()
 export class ListsService {
 	constructor(
@@ -24,6 +26,7 @@ export class ListsService {
 		private readonly listRepository: Repository<List>,
 		@Inject(KanbanGateWay)
 		private readonly kanbanGateway: KanbanGateWay,
+		private readonly supabaseService: SupabaseService,
 	) {}
 
 	async create(createListDto: CreateListDto, user: ActiveUserData) {
@@ -143,7 +146,7 @@ export class ListsService {
 	async remove(id: string, user: ActiveUserData) {
 		const listInDb = await this.listRepository.findOne({
 			where: { id },
-			relations: ['board.members'],
+			relations: ['board.members', 'tasks.attachments'],
 		});
 		const boardId = listInDb.board.id;
 		if (!listInDb) {
@@ -155,6 +158,16 @@ export class ListsService {
 				'User does not have access to board',
 			);
 		}
+		let filePaths = listInDb.tasks.map((task) =>
+			task.attachments.map((attachment) => attachment.path),
+		);
+		console.log('list file paths:', filePaths.flat());
+		//remove all attachments
+		this.supabaseService
+			.getClient()
+			.storage.from('attachment')
+			.remove(filePaths.flat());
+
 		await this.listRepository.remove(listInDb);
 		delete listInDb.board;
 		this.kanbanGateway.server.to(boardId).emit(EVENTS.LIST_DELETED, {
