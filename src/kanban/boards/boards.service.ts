@@ -134,10 +134,13 @@ export class BoardsService {
 		await this.boardRepository.remove(board);
 
 		//broadcast to room
-		this.kanbanGateway.server.to(board.id).emit(EVENTS.BOARD_DELETED, {
-			message: 'Board deleted',
-			sender: user.id,
-		});
+		await this.kanbanGateway.server
+			.to(board.id)
+			.emit(EVENTS.BOARD_DELETED, {
+				message: 'Board deleted',
+				sender: user.id,
+			});
+
 		this.kanbanGateway.server.in(board.id).disconnectSockets();
 
 		//delete all attachments

@@ -252,7 +252,7 @@ export class TasksService {
 		user: ActiveUserData,
 		attachmentId: string,
 	) {
-		const taskInDb = await this.taskRepository.findOne({
+		let taskInDb = await this.taskRepository.findOne({
 			where: { id },
 			relations: ['list', 'board.members', 'attachments', 'tags'],
 		});
@@ -271,6 +271,10 @@ export class TasksService {
 		});
 		if (!attachment) return new NotFoundException('Attachment not found');
 		await this.attachmentRepository.remove(attachment);
+		if (taskInDb.backgroundAttachmentPath === attachment.path) {
+			taskInDb.backgroundAttachmentPath = null;
+			taskInDb = await this.taskRepository.save(taskInDb);
+		}
 
 		delete taskInDb.board;
 		delete taskInDb.list;
