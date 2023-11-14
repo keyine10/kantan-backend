@@ -5,6 +5,9 @@ import { IsHexColor, IsOptional, IsString } from 'class-validator';
 export class UpdateTaskDto extends PartialType(CreateTaskDto) {
 	@IsOptional()
 	@IsString()
-	@IsHexColor()
 	backgroundColor: string;
+
+	@IsOptional()
+	@IsString()
+	backgroundAttachmentPath: string;
 }

@@ -16,6 +16,7 @@ import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface
 import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
 import { IsUUID, isUUID } from 'class-validator';
 import { SupabaseService } from '../../commons/supabase.service';
+import { PaginationQueryDto } from '../common/pagination-query.dto';
 @Injectable()
 export class BoardsService {
 	constructor(
@@ -39,8 +40,8 @@ export class BoardsService {
 		const savedBoard = await this.boardRepository.save(createBoard);
 		return savedBoard;
 	}
-	findAll(user: ActiveUserData) {
-		return this.boardRepository.find({
+	async findAll(user: ActiveUserData, paginationQuery: PaginationQueryDto) {
+		let boards = await this.boardRepository.find({
 			// user is creator or a member
 			where: [
 				{ creator: [{ id: user.id }] },
@@ -51,6 +52,7 @@ export class BoardsService {
 				updatedAt: 'DESC',
 			},
 		});
+		return boards;
 	}
 
 	async findOne(id: string, user: ActiveUserData) {
@@ -85,6 +87,8 @@ export class BoardsService {
 			throw new NotFoundException(
 				"Board doesn't exist or user is unauthorized",
 			);
+		// update board's updatedAt field whenever there is a get request
+		this.boardRepository.save(board);
 		return board;
 	}
 
@@ -128,6 +132,8 @@ export class BoardsService {
 			);
 		if (board.creatorId !== user.id) return new UnauthorizedException();
 		await this.boardRepository.remove(board);
+
+		//broadcast to room
 		this.kanbanGateway.server.to(board.id).emit(EVENTS.BOARD_DELETED, {
 			message: 'Board deleted',
 			sender: user.id,
@@ -138,11 +144,10 @@ export class BoardsService {
 		let filePaths = board.tasks.map((task) => {
 			return task.attachments.map((attachment) => attachment.path);
 		});
-		this.supabaseService
+		await this.supabaseService
 			.getClient()
 			.storage.from('attachment')
 			.remove(filePaths.flat());
-		await this.boardRepository.remove(board);
 
 		return;
 	}

@@ -63,9 +63,8 @@ export class Task {
 	@Column({ nullable: true })
 	backgroundColor: string;
 
-	// TODO: checklists and labels
-	// @OneToMany(() => Checklist, (checklist) => checklist.task)
-	// checklists: Checklist[];
+	@Column({ nullable: true })
+	backgroundAttachmentPath: string;
 
 	@OneToMany(() => Attachment, (attachment) => attachment.task, {
 		onDelete: 'CASCADE',

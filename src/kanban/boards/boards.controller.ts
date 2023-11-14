@@ -7,6 +7,7 @@ import {
 	Param,
 	Delete,
 	HttpCode,
+	Query,
 } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
@@ -16,6 +17,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ActiveUser } from '../../auth/decorators/active-user/active-user.decorator';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { UpdateBoardMembersDto } from './dto/update-board-members.dto';
+import { PaginationQueryDto } from '../common/pagination-query.dto';
 
 @Controller('boards')
 @ApiTags('Boards')
@@ -32,8 +34,11 @@ export class BoardsController {
 	}
 	//TODO: pagination query
 	@Get()
-	findAll(@ActiveUser() user: ActiveUserData) {
-		return this.boardsService.findAll(user);
+	findAll(
+		@ActiveUser() user: ActiveUserData,
+		@Query() query: PaginationQueryDto,
+	) {
+		return this.boardsService.findAll(user, query);
 	}
 
 	@Get(':id')
