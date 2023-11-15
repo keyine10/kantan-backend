@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+	Entity,
+	PrimaryGeneratedColumn,
+	Column,
+	ManyToOne,
+	CreateDateColumn,
+} from 'typeorm';
 import { Task } from './task.entity';
 import { Max } from 'class-validator';
 
@@ -6,6 +12,9 @@ import { Max } from 'class-validator';
 export class Tag {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
+
+	@CreateDateColumn()
+	createdAt: Date;
 
 	@Max(255)
 	@Column({ nullable: false })

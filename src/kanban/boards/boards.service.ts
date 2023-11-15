@@ -73,6 +73,9 @@ export class BoardsService {
 					position: 'ASC',
 					tasks: {
 						position: 'ASC',
+						tags: {
+							createdAt: 'ASC',
+						},
 					},
 				},
 			},
