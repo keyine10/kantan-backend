@@ -35,6 +35,11 @@ export class ListsService {
 		const boardInDb = await this.boardRepository.findOne({
 			where: { id: createListDto.boardId },
 			relations: ['members', 'lists'],
+			order: {
+				lists: {
+					position: 'ASC',
+				},
+			},
 		});
 		const boardId = boardInDb.id;
 		if (!boardInDb) throw new NotFoundException('Cannot find board');

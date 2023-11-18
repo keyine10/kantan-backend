@@ -88,19 +88,21 @@ export class AuthenticationService {
 
 		if (!compare) throw new ConflictException();
 
+		const options = {
+			secret: this.jwtConfiguration.secret,
+			expiresIn: this.jwtConfiguration.accessTokenTtl,
+			issuer: this.jwtConfiguration.issuer,
+			audience: this.jwtConfiguration.audience,
+		};
 		const accessToken = this.jwtService.sign(
 			{
 				id: user.id,
 				email: user.email,
 				name: user.name,
 			},
-			{
-				secret: this.jwtConfiguration.secret,
-				expiresIn: this.jwtConfiguration.accessTokenTtl,
-				issuer: this.jwtConfiguration.issuer,
-				audience: this.jwtConfiguration.audience,
-			},
+			options,
 		);
+		console.log(await this.jwtService.verifyAsync(accessToken, options));
 		return {
 			id: user.id,
 			name: user.name,
