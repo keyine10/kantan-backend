@@ -43,6 +43,11 @@ export class TasksService {
 		const listInDb = await this.listRepository.findOne({
 			where: { id: createTaskDto.listId },
 			relations: ['tasks', 'board.members', 'board.creator'],
+			order: {
+				tasks: {
+					position: 'ASC',
+				},
+			},
 		});
 		if (!listInDb) return new NotFoundException('List not found');
 
