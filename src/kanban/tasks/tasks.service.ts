@@ -307,6 +307,11 @@ export class TasksService {
 				'creator',
 				'attachments',
 			],
+			order: {
+				tags: {
+					createdAt: 'ASC',
+				},
+			},
 		});
 		if (!taskInDb) return new NotFoundException('Task not found');
 
@@ -352,6 +357,11 @@ export class TasksService {
 				'creator',
 				'attachments',
 			],
+			order: {
+				tags: {
+					createdAt: 'ASC',
+				},
+			},
 		});
 		if (!taskInDb) return new NotFoundException('Task not found');
 
