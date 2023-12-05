@@ -159,6 +159,8 @@ export class KanbanGateway implements OnModuleInit, OnGatewayDisconnect {
 			});
 			console.log(activeMembersMap);
 			this.server.to(board.id).emit(EVENTS.BOARD_ACTIVE_MEMBERS, {
+				members: board.members,
+				pendingMembers: board.pendingMembers,
 				activeMembers: Array.from(activeMembersMap.values()),
 			});
 		} catch (e) {

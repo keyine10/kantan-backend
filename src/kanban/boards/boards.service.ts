@@ -134,8 +134,6 @@ export class BoardsService {
 				`Cannot find Board with id ${id} or user is unauthorized`,
 			);
 		if (board.creatorId !== user.id) return new UnauthorizedException();
-		await this.boardRepository.remove(board);
-
 		//broadcast to room
 		await this.kanbanGateway.server
 			.to(board.id)
@@ -143,14 +141,14 @@ export class BoardsService {
 				message: 'Board deleted',
 				sender: user.id,
 			});
-
-		this.kanbanGateway.server.in(board.id).disconnectSockets();
+		await this.kanbanGateway.server.in(board.id).disconnectSockets();
+		await this.boardRepository.remove(board);
 
 		//delete all attachments
 		let filePaths = board.tasks.map((task) => {
 			return task.attachments.map((attachment) => attachment.path);
 		});
-		await this.supabaseService
+		this.supabaseService
 			.getClient()
 			.storage.from('attachment')
 			.remove(filePaths.flat());
