@@ -61,6 +61,7 @@ export class AuthenticationService {
 					board.pendingMembers = board.pendingMembers.filter(
 						(email) => email !== user.email,
 					);
+
 					return this.boardRepository.save(board);
 				}),
 			);
@@ -102,7 +103,7 @@ export class AuthenticationService {
 			},
 			options,
 		);
-		console.log(await this.jwtService.verifyAsync(accessToken, options));
+		// console.log(await this.jwtService.verifyAsync(accessToken, options));
 		return {
 			id: user.id,
 			name: user.name,

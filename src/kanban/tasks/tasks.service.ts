@@ -14,7 +14,7 @@ import { Repository } from 'typeorm';
 import { Task } from './entities/task.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { POSITION_INTERVAL } from '../common/constants';
-import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
+import { EVENTS, KanbanGateway } from '../gateway/kanban.gateway';
 import { AttachmentDto } from './dto/attachment.dto';
 import { SupabaseService } from '../../commons/supabase.service';
 import { Attachment } from './entities/attachment.entity';
@@ -34,8 +34,8 @@ export class TasksService {
 		private readonly attachmentRepository: Repository<Attachment>,
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>,
-		@Inject(KanbanGateWay)
-		private readonly kanbanGateway: KanbanGateWay,
+		@Inject(KanbanGateway)
+		private readonly kanbanGateway: KanbanGateway,
 
 		private readonly supabaseService: SupabaseService,
 	) {}

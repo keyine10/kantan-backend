@@ -14,7 +14,7 @@ import { Repository } from 'typeorm';
 import { Board } from '../boards/entities/board.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
 import { isUUID } from 'class-validator';
-import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
+import { EVENTS, KanbanGateway } from '../gateway/kanban.gateway';
 import { POSITION_INTERVAL } from '../common/constants';
 import { SupabaseService } from '../../commons/supabase.service';
 @Injectable()
@@ -24,8 +24,8 @@ export class ListsService {
 		private readonly boardRepository: Repository<Board>,
 		@InjectRepository(List)
 		private readonly listRepository: Repository<List>,
-		@Inject(KanbanGateWay)
-		private readonly kanbanGateway: KanbanGateWay,
+		@Inject(KanbanGateway)
+		private readonly kanbanGateway: KanbanGateway,
 		private readonly supabaseService: SupabaseService,
 	) {}
 

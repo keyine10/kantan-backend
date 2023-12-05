@@ -13,7 +13,7 @@ import { Board } from './entities/board.entity';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ActiveUserData } from '../../auth/interfaces/active-user-data.interface';
-import { EVENTS, KanbanGateWay } from '../gateway/kanban.gateway';
+import { EVENTS, KanbanGateway } from '../gateway/kanban.gateway';
 import { IsUUID, isUUID } from 'class-validator';
 import { SupabaseService } from '../../commons/supabase.service';
 import { PaginationQueryDto } from '../common/pagination-query.dto';
@@ -24,8 +24,8 @@ export class BoardsService {
 		private readonly boardRepository: Repository<Board>,
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
-		@Inject(KanbanGateWay)
-		private readonly kanbanGateway: KanbanGateWay,
+		@Inject(KanbanGateway)
+		private readonly kanbanGateway: KanbanGateway,
 		private readonly supabaseService: SupabaseService,
 	) {}
 	async create(createBoardDto: CreateBoardDto, user: ActiveUserData) {

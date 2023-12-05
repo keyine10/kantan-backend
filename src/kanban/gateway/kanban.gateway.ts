@@ -38,7 +38,7 @@ export const EVENTS = {
 		origin: '*',
 	},
 })
-export class KanbanGateWay implements OnModuleInit, OnGatewayDisconnect {
+export class KanbanGateway implements OnModuleInit, OnGatewayDisconnect {
 	@WebSocketServer()
 	server: Server;
 

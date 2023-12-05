@@ -10,7 +10,7 @@ import {
 export class CreateTagDto {
 	@IsString()
 	@MinLength(1)
-	@MaxLength(255)
+	@MaxLength(50)
 	name: string;
 
 	@IsString()

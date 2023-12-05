@@ -37,6 +37,4 @@ export class List {
 	@OneToMany(() => Task, (task) => task.list, { onDelete: 'CASCADE' })
 	@ArrayMaxSize(100)
 	tasks: Task[];
-
-	// Add more properties and methods as needed
 }
